@@ -23,6 +23,8 @@ def find_split(dataset):
         gain = find_best_gain(split_points, labelled_col)
         gains = np.append(gains, gain)
 
+    print(gains)
+
     # get attribute with largest gain
 
 # Find all possible split points for the given column
@@ -58,7 +60,11 @@ def entropy(dataset):
     H = 0
 
     for i in range(1, 4):
+        if len(classes) == 0:
+            continue
+
         pk = (classes == i).sum() / len(classes)
+
         if pk != 0:
             H = H - pk * np.log2(pk)
 
@@ -81,4 +87,4 @@ def gain(all, left, right):
 # def decision_tree_learning(dataset, depth_variable):
     # if all samples have same label
 
-print(find_split(clean_dataset))
+find_split(clean_dataset)
