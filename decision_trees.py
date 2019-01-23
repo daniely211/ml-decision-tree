@@ -36,8 +36,7 @@ def find_split_points(sorted_col):
         (val_next, classification_next) = tuple(sorted_col[i + 1])
 
         if val != val_next and classification != classification_next:
-            diff = (val_next - val) / 2
-            mid = val_next + diff
+            mid = (val + val_next) / 2
             split_points = np.append(split_points, mid)
 
     return split_points
