@@ -15,21 +15,15 @@ def find_split(dataset):
     for i in range(len(dataset[0]) - 1):
         # create array of [col value, label]
         labelled_col = dataset[:, [i, class_index]]
+
         # sort by col value
         labelled_col = labelled_col[labelled_col[:,0].argsort()]
+
         split_points = find_split_points(labelled_col)
         gain = find_best_gain(split_points, labelled_col)
         gains = np.append(gains, gain)
 
     # get attribute with largest gain
-
-    # for EACH router router_strength (attribute)
-        # sort the array, find the mid point and midpoint +1 then find average between those 2 numbers
-        # split the router streght left = < midpoint, right = < midpoint
-        # calculate the GAIN of the split value
-        # compare with the largest gain value if it is largest, replace the left and right
-
-    # return {"attribute": router_number, "value": value, "left": left, "right": right}
 
 # Find all possible split points for the given column
 def find_split_points(sorted_col):
@@ -46,6 +40,7 @@ def find_split_points(sorted_col):
 
     return split_points
 
+# Finds the largest gain given some split points and a sorted column
 def find_best_gain(split_points, sorted_col):
     gains = np.array([])
 
@@ -58,7 +53,6 @@ def find_best_gain(split_points, sorted_col):
 
 # Calculate entropy of the dataset
 def entropy(dataset):
-    # get all classifications
     classes = dataset[:,1]
 
     H = 0
