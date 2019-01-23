@@ -60,7 +60,7 @@ def entropy(dataset):
     H = 0
 
     for i in range(1, 4):
-        if len(classes) == 0 || pk == 0:
+        if len(classes) == 0 or pk == 0:
             continue
 
         pk = (classes == i).sum() / len(classes)
