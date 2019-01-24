@@ -59,10 +59,11 @@ def entropy(dataset):
     H = 0
 
     for i in range(1, 4):
-        if len(classes) == 0 or pk == 0:
+        no_in_class = (classes == i).sum()
+        if len(classes) == 0 or no_in_class == 0:
             continue
 
-        pk = (classes == i).sum() / len(classes)
+        pk = no_in_class / len(classes)
         H = H - pk * np.log2(pk)
 
     return H
