@@ -9,7 +9,7 @@ noisy_dataset = np.loadtxt('wifi_db/noisy_dataset.txt')
 # Find the best split to perform
 def find_split(dataset):
     max_gain = float('-inf')
-    split_point = None
+    split_point_attr = None
 
     class_index = len(dataset[0]) - 1
 
@@ -21,13 +21,13 @@ def find_split(dataset):
         sorted_dataset = dataset[dataset[:,i].argsort()]
 
         split_points = find_split_points(sorted_dataset, i)
-        gain = find_best_gain(split_points, sorted_dataset, i)
+        (gain, split_point) = find_best_gain(split_points, sorted_dataset, i)
 
-        if gain[0] > max_gain:
-            max_gain = gain[0]
-            split_point = (gain[1], i)
+        if gain > max_gain:
+            max_gain = gain
+            split_point_attr = (split_point, i)
 
-    return split_point
+    return split_point_attr
 
 
 # Find all possible split points for the given column
@@ -115,3 +115,5 @@ def decision_tree_learning(dataset, depth):
         (right_branch, right_depth) = decision_tree_learning(right, depth + 1)
         node = {"attribute": attribute, "value": value, "left": left_branch, "right": right_branch}
         return (node, max(left_depth, right_depth))
+
+print(decision_tree_learning(clean_dataset, 0))
