@@ -115,5 +115,3 @@ def decision_tree_learning(dataset, depth):
         (right_branch, right_depth) = decision_tree_learning(right, depth + 1)
         node = {"attribute": attribute, "value": value, "left": left_branch, "right": right_branch}
         return (node, max(left_depth, right_depth))
-
-print(decision_tree_learning(clean_dataset, 0))
