@@ -7,8 +7,8 @@ def confusion_matrix(labels):
     confusion_matrix = np.zeros((4,4),dtype = int)
 
     for pair in labels:
-        ground_truth = pair[0]
-        prediction = pair[1]
+        ground_truth = int(pair[0])
+        prediction = int(pair[1])
         confusion_matrix[ground_truth-1][prediction-1] += 1
 
     return confusion_matrix

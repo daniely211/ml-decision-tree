@@ -1,6 +1,7 @@
 from numpy.random import shuffle
 from decision_tree import decision_tree_learning
 import numpy as np
+from confusion_matrix import confusion_matrix, recall, precision, classification_rate, F1_measure
 
 clean_dataset = np.loadtxt('wifi_db/clean_dataset.txt')
 noisy_dataset = np.loadtxt('wifi_db/noisy_dataset.txt')
@@ -25,7 +26,14 @@ def evaluation(dataset):
         (trained_model, depth) = decision_tree_learning(training_data, 0)
 
         labels_predictions = [(prediction(trained_model, row), row[room_index]) for row in test_data]
-        # print(labels_predictions)
+        cm = confusion_matrix(labels_predictions)
+
+        print("Confustion matrix: ")
+        print(cm)
+        print("Recall: " + str(recall(cm)))
+        print("Precision: " + str(precision(cm)))
+        print("classification_rate: "+str(classification_rate(cm)))
+        print("F1_measure: "+ str(F1_measure(cm)))
 
         # count = 0
         # for (a, b) in labels_predictions:
