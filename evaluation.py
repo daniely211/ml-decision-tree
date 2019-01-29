@@ -16,7 +16,6 @@ def prediction(node, row):
     else:
         return prediction(node['right'], row)
 
-
 def evaluation(dataset):
     shuffle(dataset)
     k = 10
@@ -25,9 +24,11 @@ def evaluation(dataset):
         (training_data, test_data) = k_fold_split(dataset, k, i)
         (trained_model, depth) = decision_tree_learning(training_data, 0)
 
+
         labels_predictions = [(prediction(trained_model, row), row[room_index]) for row in test_data]
         cm = confusion_matrix(labels_predictions)
 
+        #BEFORE PRUNING
         print("Confustion matrix: ")
         print(cm)
         print("Recall: " + str(recall(cm)))
@@ -35,15 +36,13 @@ def evaluation(dataset):
         print("classification_rate: "+str(classification_rate(cm)))
         print("F1_measure: "+ str(F1_measure(cm)))
 
-        # count = 0
-        # for (a, b) in labels_predictions:
-        #     if a == b:
-        #         count += 1
-        #
-        # print(count)
+        # Prune the trained trained_model
+        # Common approach with decision trees
+        # Go through all the nodes that are only connected to leaves and check if the accuracy on the validation dataset would increase if this node is turned into a leaf.
+        # You need to do this recursively as when you turn nodes into leaves, you might create new nodes that are connected to two leaves.
 
-        # evaluation goes here
-        # c_matrix = confussion_matrix(labels_predictions)
+        #AFTER PRUNING
+
 
 def k_fold_split(dataset, k, index):
     test_size = int(len(dataset) / k)
@@ -63,3 +62,4 @@ def k_fold_split(dataset, k, index):
 #   pass
 
 evaluation(clean_dataset)
+# evaluation(noisy_dataset)

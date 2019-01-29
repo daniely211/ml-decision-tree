@@ -13,7 +13,7 @@ def find_split(dataset):
 
     class_index = len(dataset[0]) - 1
 
-    # TODO: Make floats
+    dataset.astype(float)
 
     # find gain for each attribute
     for i in range(len(dataset[0]) - 1):
@@ -113,5 +113,5 @@ def decision_tree_learning(dataset, depth):
         (left, right) = split_data(dataset, attribute, value)
         (left_branch, left_depth) = decision_tree_learning(left, depth + 1)
         (right_branch, right_depth) = decision_tree_learning(right, depth + 1)
-        node = {"attribute": attribute, "value": value, "left": left_branch, "right": right_branch, "leaf": False}
+        node = {"attribute": attribute, "value": value, "left": left_branch, "right": right_branch}
         return (node, max(left_depth, right_depth))

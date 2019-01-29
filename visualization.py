@@ -3,112 +3,103 @@ from ast import literal_eval
 import decision_tree
 import numpy as np
 
-decisionNode = dict(boxstyle="round4", fc="w", color='dodgerblue')
-leafNode = dict(boxstyle="round4", fc="w", color='dodgerblue')
-arrow_args = dict(arrowstyle="-", color='gold', connectionstyle="arc3")
+decisionNode=dict(boxstyle="round4",fc="w", color ='dodgerblue')
+leafNode=dict(boxstyle="round4",fc="w", color='dodgerblue')
+arrow_args=dict(arrowstyle="-",color='gold', connectionstyle="arc3")
 
-def plot_node(nodeText, centerPt, parent_pt, nodeType):
-    plot.ax1.annotate(
-        nodeText, xy=parent_pt, xycoords='axes fraction', xytext=centerPt,
-        textcoords='axes fraction', va='bottom', ha='center', bbox=nodeType,
-        arrowprops=arrow_args
-    )
+def plotNode(nodeText,centerPt,parentPt,nodeType):
+    createPlot.ax1.annotate(nodeText, xy=parentPt, xycoords='axes fraction', xytext=centerPt, textcoords='axes fraction',
+                           va='bottom', ha='center', bbox=nodeType, arrowprops=arrow_args)
 
-def get_num_leafs(tree):
-    num_leafs = 0
-    first_list = list(tree.keys())
-    first_str = first_list[0]
-    second_dict = tree[first_str]
+def getNumLeafs(myTree):
+    numLeafs = 0
+    firstList = list(myTree.keys())
+    firstStr=firstList[0]
+    secondDict=myTree[firstStr]
+    for key in secondDict.keys():
+        if type(secondDict[key]).__name__ == 'dict':
+            numLeafs+=getNumLeafs(secondDict[key])
+        else: numLeafs+=1
+    return numLeafs
 
-    for key in second_dict.keys():
-        if type(second_dict[key]).__name__ == 'dict':
-            num_leafs += get_num_leafs(second_dict[key])
+
+def getTreeDepth(myTree):
+    maxDepth=0
+    firstList=list(myTree.keys())
+    firstStr=firstList[0]
+    secondDict=myTree[firstStr]
+    for key in secondDict.keys():
+        if type(secondDict[key]).__name__=='dict':
+            thisDepth=1+getTreeDepth(secondDict[key])
+        else: thisDepth=1
+        if thisDepth>maxDepth:
+            maxDepth=thisDepth
+    return maxDepth
+
+
+def plotTree(myTree, parentPt, nodeTxt):
+    numLeafs = getNumLeafs(myTree)
+    depth = getTreeDepth(myTree)
+    firstList = list(myTree.keys())
+    firstStr=firstList[0]
+    cntrPt = (plotTree.xOff + (1.0 + float(numLeafs))/2.0/plotTree.totalW, plotTree.yOff)
+    plotNode(firstStr, cntrPt, parentPt, decisionNode)
+    secondDict = myTree[firstStr]
+    plotTree.yOff = plotTree.yOff - 1.0/plotTree.totalD
+    for key in secondDict.keys():
+        if type(secondDict[key]).__name__=='dict':
+            plotTree(secondDict[key],cntrPt,str(key))
         else:
-            num_leafs += 1
-
-    return num_leafs
-
-def get_tree_depth(tree):
-    max_depth = 0
-    first_list = list(tree.keys())
-    first_str = first_list[0]
-    second_dict=tree[first_str]
-
-    for key in second_dict.keys():
-        if type(second_dict[key]).__name__ == 'dict':
-            this_depth = 1 + get_tree_depth(second_dict[key])
-        else:
-            this_depth = 1
-
-        if this_depth > max_depth:
-            max_depth = this_depth
-
-    return max_depth
+            plotTree.xOff = plotTree.xOff + 1.0/plotTree.totalW
+            plotNode(secondDict[key], (plotTree.xOff, plotTree.yOff), cntrPt, leafNode)
+    plotTree.yOff = plotTree.yOff + 1.0/plotTree.totalD
 
 
-def plot_tree(tree, parent_pt, nodeTxt):
-    num_leafs = get_num_leafs(tree)
-    depth = get_tree_depth(tree)
-    first_list = list(tree.keys())
-    first_str = first_list[0]
-    center_point = (plot_tree.xOff + (1.0 + float(num_leafs)) / 2.0 / plot_tree.totalW, plot_tree.yOff)
-    plot_node(first_str, center_point, parent_pt, decisionNode)
-    second_dict = tree[first_str]
-    plot_tree.yOff = plot_tree.yOff - 1.0 / plot_tree.totalD
-
-    for key in second_dict.keys():
-        if type(second_dict[key]).__name__=='dict':
-            plot_tree(second_dict[key], center_point, str(key))
-        else:
-            plot_tree.xOff = plot_tree.xOff + 1.0 / plot_tree.totalW
-            plot_node(second_dict[key], (plot_tree.xOff, plot_tree.yOff), center_point, leafNode)
-
-    plot_tree.yOff = plot_tree.yOff + 1.0 / plot_tree.totalD
-
-def plot(inTree):
-    fig = plt.figure(1, facecolor='white')
+def createPlot(inTree):
+    fig=plt.figure(1,facecolor='white')
     fig.clf()
-    axprops = dict(xticks=[], yticks=[])
-    plot.ax1 = plt.subplot(111, frameon=False, **axprops)
-    plot_tree.totalW = float(get_num_leafs(inTree))
-    plot_tree.totalD = float(get_tree_depth(inTree))
-    plot_tree.xOff = -0.5 / plot_tree.totalW
-    plot_tree.yOff = 1.0
-    plot_tree(inTree, (0.5, 1.0), '')
+    axprops=dict(xticks=[],yticks=[])
+    createPlot.ax1=plt.subplot(111,frameon=False,**axprops)
+    plotTree.totalW=float(getNumLeafs(inTree))
+    plotTree.totalD=float(getTreeDepth(inTree))
+    plotTree.xOff=-0.5/plotTree.totalW
+    plotTree.yOff=1.0
+    plotTree(inTree,(0.5,1.0),'')
     plt.show()
 
-def retrieve_tree(tree):
+
+def retrieveTree(tree):
     if not tree:
         return None
 
-    left = combine(tree.get('left'))
-    right = combine(tree.get('right'))
-    tree['left'] = left
-    tree['right'] = right
-
+    left = Combine(tree.get('left'))
+    right = Combine(tree.get('right'))
+    tree['left'] = left;
+    tree['right'] = right;
     if type(left).__name__ == 'dict':
-        retrieve_tree(list(left.values())[0])
-
+        retrieveTree(list(left.values())[0])
     if type(right).__name__ == 'dict':
-        retrieve_tree(list(right.values())[0])
-
+        retrieveTree(list(right.values())[0])
     return tree
 
-def combine(tree):
+
+def Combine(tree):
     leaf = tree.get('leaf');
     value = tree.pop('value')
     attribute = tree.pop('attribute')
 
     new = {}
-    if leaf:
-        return 'leaf: ' + str(value)
-    else:
-        condition = 'x' + str(attribute) + '<' + str(value)
-        new[condition] = tree
+    if leaf == None:
+        condition = 'x'+str(attribute)+'<'+str(value)
+        new[condition] = tree;
         return new
+    else:
+        return 'leaf:'+str(value)
 
 clean_dataset = np.loadtxt('wifi_db/clean_dataset.txt')
-(tree, depth) = decision_tree.decision_tree_learning(clean_dataset, 0)
-dt = combine(retrieve_tree(tree))
+(dt, depth) = decision_tree.decision_tree_learning(clean_dataset, 0)
+decisionTree = Combine(retrieveTree(dt))
+print(decisionTree)
 
-plot(dt)
+createPlot(decisionTree)
+# print(getTreeDepth(decisionTree))
