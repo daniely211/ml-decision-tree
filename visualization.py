@@ -100,12 +100,12 @@ def combine(tree):
     attribute = tree.pop('attribute')
 
     new = {}
-    if leaf == None:
+    if leaf:
+        return 'leaf: ' + str(value)
+    else:
         condition = 'x' + str(attribute) + '<' + str(value)
         new[condition] = tree
         return new
-    else:
-        return 'leaf: ' + str(value)
 
 clean_dataset = np.loadtxt('wifi_db/clean_dataset.txt')
 (tree, depth) = decision_tree.decision_tree_learning(clean_dataset, 0)
