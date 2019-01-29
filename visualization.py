@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 from ast import literal_eval
-import decision_trees
+import decision_tree
 import numpy as np
 
 decisionNode = dict(boxstyle="round4", fc="w", color='dodgerblue')
@@ -27,7 +27,6 @@ def get_num_leafs(tree):
             num_leafs += 1
 
     return num_leafs
-
 
 def get_tree_depth(tree):
     max_depth = 0
@@ -109,7 +108,7 @@ def combine(tree):
         return 'leaf: ' + str(value)
 
 clean_dataset = np.loadtxt('wifi_db/clean_dataset.txt')
-(tree, depth) = decision_trees.decision_tree_learning(clean_dataset, 0)
-decision_tree = combine(retrieve_tree(tree))
+(tree, depth) = decision_tree.decision_tree_learning(clean_dataset, 0)
+dt = combine(retrieve_tree(tree))
 
-plot(decision_tree)
+plot(dt)
