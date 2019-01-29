@@ -24,8 +24,9 @@ def evaluation(dataset):
         (training_data, test_data) = k_fold_split(dataset, k, i)
         (trained_model, depth) = decision_tree_learning(training_data, 0)
 
-        labels_predictions = [(prediction(trained_model, row), row[room_index]) for row in dataset]
+        labels_predictions = [(prediction(trained_model, row), row[room_index]) for row in test_data]
         # print(labels_predictions)
+
         # count = 0
         # for (a, b) in labels_predictions:
         #     if a == b:
