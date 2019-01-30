@@ -35,27 +35,28 @@ def evaluation(dataset):
         cr_before_pruning = classification_rate(cm_before_pruning)
         F1_before_pruning = F1_measure(cm_before_pruning)
 
-        #BEFORE PRUNING
-        print("Before Pruning Confustion matrix: ")
+        # BEFORE PRUNING
+        print("Before Pruning Confusion matrix: ")
         print(cm_before_pruning)
-        print("Recall: " + str(recall_before_pruning))
-        print("Precision: " + str(precision__before_pruning))
-        print("classification_rate: "+str(cr_before_pruning))
-        print("F1_measure: "+ str(F1_before_pruning)+"\n\n")
+        print("recall: " + str(recall_before_pruning))
+        print("precision: " + str(precision__before_pruning))
+        print("classification_rate: " + str(cr_before_pruning))
+        print("F1_measure: " + str(F1_before_pruning))
+        print("\n\n")
 
         # Prune the model until all the metrics increase
         # TODO IMPLEMENT PRUNING
         # TODO Print out the metrics again and also the difference
 
-        #DFS 
+        # DFS
         # While there are node with 2 leaves not visited
-        #   make 2 new models where 1 model contains the left leaf as the node and the other thr right leaf as the nide 
+        #   make 2 new models where 1 model contains the left leaf as the node and the other thr right leaf as the nide
         #   run validation data on the new models
         #   choose the 'better' one between the pruned model and the best one
         #       Keep the pruning if it has
         #       Revert the prune if it has not
 
-        
+
 
 
         # Prune the trained trained_model
@@ -65,18 +66,60 @@ def evaluation(dataset):
 
         #AFTER PRUNING
 
-def find_prun_models(node):
-    # find the left most unvisited node that has 2 leaf nodes
-    node[]
-    left = node["left"]
-    right = node["right"]
-    if left["leaf"] and right["leaf"]:
-        if not node["pruned"]: 
-            # do pruning
+def prune_tree(node, parent=None, attribute=None, root=None):
+    if root is None:
+        root = node
 
-        else:
-            # so this node has been pruned before and it did not improve
-            # go to the parent and find th
+    if node['leaf']:
+        return node
+
+    node['left'] = prune_tree(node['left'], node, 'left', root)
+    node['right'] = prune_tree(node['right'], node, 'right', root)
+
+    if parent and node['left'] and node['left']['leaf'] and node['right'] and node['right']['leaf']:
+        # test left
+        parent[attribute] = node['left']
+        print(root)
+
+        # test right
+        parent[attribute] = node['right']
+        print(root)
+        node = node['right']
+
+    return node
+
+test_tree = {
+    'left': {
+        'left': { 'leaf': True },
+        'right': {
+            'left': { 'leaf': True, 'value': 1 },
+            'right': { 'leaf': True, 'value': 2 },
+            'leaf': False
+        },
+        'leaf': False
+    },
+    'right': {
+        'left': { 'leaf': True },
+        'right': { 'leaf': True },
+        'leaf': False
+    },
+    'leaf': False
+}
+# print(test_tree)
+# print(prune_tree(test_tree))
+
+# def find_prun_models(node):
+#     # find the left most unvisited node that has 2 leaf nodes
+#     left = node["left"]
+#     right = node["right"]
+#
+#     if left["leaf"] and right["leaf"]:
+#         if not node["pruned"]:
+#             # do pruning
+#
+#         else:
+#             # so this node has been pruned before and it did not improve
+#             # go to the parent and find th
 
 
 
