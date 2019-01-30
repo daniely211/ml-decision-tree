@@ -71,7 +71,7 @@ def dfs(root):
     while stack:
         vertex = stack.pop()
         if vertex not in visited:
-            visited.add(vertex)
+            visited.append(vertex)
             # new nodes are added to the start of stack
             stack = graph[vertex] - visited + stack 
     return visited
