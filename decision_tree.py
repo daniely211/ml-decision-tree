@@ -54,8 +54,7 @@ def find_best_gain(split_points, sorted_dataset, attribute):
     gain_point = (float('-inf'), None)
 
     for split_point in split_points:
-        left = sorted_dataset[sorted_dataset[:,attribute] < split_point]
-        right = sorted_dataset[sorted_dataset[:,attribute] > split_point]
+        (left, right) = split_data(sorted_dataset, attribute, split_point)
         curr_gain = gain(sorted_dataset, left, right)
 
         if curr_gain > max_gain:
@@ -93,9 +92,6 @@ def gain(all, left, right):
     return entropy(all) - remainder(left, right)
 
 def split_data(dataset, attribute, value):
-    # sort by col value
-    sorted_dataset = dataset[dataset[:,attribute].argsort()]
-
     left = sorted_dataset[sorted_dataset[:,attribute] < value]
     right = sorted_dataset[sorted_dataset[:,attribute] > value]
 
@@ -110,6 +106,9 @@ def decision_tree_learning(dataset, depth):
         return (node, depth)
     else:
         (value, attribute) = find_split(dataset)
+        # sort by col value
+        sorted_dataset = dataset[dataset[:,attribute].argsort()]
+
         (left, right) = split_data(dataset, attribute, value)
         (left_branch, left_depth) = decision_tree_learning(left, depth + 1)
         (right_branch, right_depth) = decision_tree_learning(right, depth + 1)
