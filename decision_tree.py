@@ -106,7 +106,7 @@ def decision_tree_learning(dataset, depth):
     same_class = np.all(dataset[0][label_col] == dataset[:,label_col])
 
     if same_class:
-        node = {"attribute": None, "value": dataset[0][label_col], "left": None, "right": None, "leaf": True}
+        node = {"attribute": None, "value": dataset[0][label_col], "left": None, "right": None, "leaf": True, "visited": True}
         return (node, depth)
     else:
         (value, attribute) = find_split(dataset)
