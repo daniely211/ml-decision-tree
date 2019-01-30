@@ -30,31 +30,6 @@ def get_num_leaves(tree):
 
     return num_leaf_nodes
 
-
-# def get_tree_depth(tree):
-#     '''
-#     Get the depth of the tree
-#     '''
-#     # max_depth = 0
-#     # depth = 0
-#     # key_list = list(tree.keys())
-#     # condition = key_list[0]       # split condition
-#     # content = tree[condition]     # content of the node
-#     if tree["leaf"]:
-#         return 1
-
-#     return max(get_tree_depth(tree["left"]) + 1, get_tree_depth(tree["right"]) + 1)
-
-    # for key in content.keys():
-    #     if type(content[key]).__name__ == 'dict':
-    #         depth = 1 + get_tree_depth(content[key])
-    #     else:
-    #         depth = 1
-    #     if depth > max_depth:
-    #         max_depth = depth
-    # return max_depth
-
-
 def plot_tree(tree, parentPt, nodeTxt, depth):
     '''
     Ploting the tree depends on the depth of the tree
@@ -115,7 +90,7 @@ def retrieve_tree(tree):
     return tree
 
 
-def merge_keys (tree):
+def merge_keys(tree):
     '''
     Merge the keys 'attribute' and 'value' into a new key 'condition'
     For example: {’x3 < -55’: {’left’:{ left_child }, ’right’:{ right_child }}}
