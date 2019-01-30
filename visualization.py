@@ -21,11 +21,13 @@ def get_num_leaves(tree):
     key_list = list(tree.keys())
     condition = key_list[0]       # split condition
     content = tree[condition]     # content of the node
+    keys = ['left', 'right']
 
-    for key in content.keys():
+    for key in keys:
         if type(content[key]).__name__ == 'dict':
             num_leaf_nodes += get_num_leaves(content[key])
         else: num_leaf_nodes += 1
+
     return num_leaf_nodes
 
 
@@ -40,7 +42,7 @@ def get_num_leaves(tree):
 #     # content = tree[condition]     # content of the node
 #     if tree["leaf"]:
 #         return 1
-    
+
 #     return max(get_tree_depth(tree["left"]) + 1, get_tree_depth(tree["right"]) + 1)
 
     # for key in content.keys():
@@ -66,9 +68,10 @@ def plot_tree(tree, parentPt, nodeTxt, depth):
     plot_node(content, centrePt, parentPt, decision_node)
     child_node = tree[content]
     plot_tree.yOff = plot_tree.yOff - 1.0/plot_tree.totalD
-    
-    
-    for key in child_node.keys():
+
+    keys = ['left', 'right']
+
+    for key in keys:
         #TODO CHANGE THIS
         if type(child_node[key]).__name__=='bool':
             continue
@@ -80,6 +83,7 @@ def plot_tree(tree, parentPt, nodeTxt, depth):
             # a leaf node
             plot_tree.xOff = plot_tree.xOff + 1.0 / plot_tree.totalW
             plot_node(child_node[key], (plot_tree.xOff, plot_tree.yOff), centrePt, leaf_node)
+
     plot_tree.yOff = plot_tree.yOff + 1.0/plot_tree.totalD
 
 
