@@ -69,6 +69,7 @@ def plot_tree(tree, parentPt, nodeTxt, depth):
     
     
     for key in child_node.keys():
+        #TODO CHANGE THIS
         if type(child_node[key]).__name__=='bool':
             continue
 

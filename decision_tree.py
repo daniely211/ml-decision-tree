@@ -106,12 +106,12 @@ def decision_tree_learning(dataset, depth):
     same_class = np.all(dataset[0][label_col] == dataset[:,label_col])
 
     if same_class:
-        node = {"attribute": None, "value": dataset[0][label_col], "left": None, "right": None, "leaf": True, "visited": True}
+        node = {"attribute": None, "value": dataset[0][label_col], "left": None, "right": None, "leaf": True}
         return (node, depth)
     else:
         (value, attribute) = find_split(dataset)
         (left, right) = split_data(dataset, attribute, value)
         (left_branch, left_depth) = decision_tree_learning(left, depth + 1)
         (right_branch, right_depth) = decision_tree_learning(right, depth + 1)
-        node = {"attribute": attribute, "value": value, "left": left_branch, "right": right_branch, "leaf": False}
+        node = {"attribute": attribute, "value": value, "left": left_branch, "right": right_branch, "leaf": False, "prune": False}
         return (node, max(left_depth, right_depth))

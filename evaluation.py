@@ -37,7 +37,7 @@ def evaluation(dataset):
 
         #BEFORE PRUNING
         print("Before Pruning Confustion matrix: ")
-        print(cm)
+        print(cm_before_pruning)
         print("Recall: " + str(recall_before_pruning))
         print("Precision: " + str(precision__before_pruning))
         print("classification_rate: "+str(cr_before_pruning))
@@ -49,9 +49,9 @@ def evaluation(dataset):
 
         #DFS 
         # While there are node with 2 leaves not visited
-        #   prune the node
-        #   run validation test data on the new model
-        #   Check if it has imporved
+        #   make 2 new models where 1 model contains the left leaf as the node and the other thr right leaf as the nide 
+        #   run validation data on the new models
+        #   choose the 'better' one between the pruned model and the best one
         #       Keep the pruning if it has
         #       Revert the prune if it has not
 
@@ -65,16 +65,19 @@ def evaluation(dataset):
 
         #AFTER PRUNING
 
-def dfs(root):
-    visited = []
-    stack = [root]
-    while stack:
-        vertex = stack.pop()
-        if vertex not in visited:
-            visited.append(vertex)
-            # new nodes are added to the start of stack
-            stack = graph[vertex] - visited + stack 
-    return visited
+def find_prun_models(node):
+    # find the left most unvisited node that has 2 leaf nodes
+    node[]
+    left = node["left"]
+    right = node["right"]
+    if left["leaf"] and right["leaf"]:
+        if not node["pruned"]: 
+            # do pruning
+
+        else:
+            # so this node has been pruned before and it did not improve
+            # go to the parent and find th
+
 
 
 def k_fold_split(dataset, k, index):
