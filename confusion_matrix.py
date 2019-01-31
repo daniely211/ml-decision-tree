@@ -55,6 +55,7 @@ def precision(cm):
 
 def classification_rate(cm):
     return sum((TP(cm) + TN(cm)) / (TP(cm) + TN(cm) + FP(cm) +FN(cm)))/4
+    
 
 def F1_measure(cm):
     return 2 * precision(cm) * recall(cm) / (precision(cm) + recall(cm))
