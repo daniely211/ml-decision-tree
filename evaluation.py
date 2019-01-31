@@ -7,7 +7,14 @@ clean_dataset = np.loadtxt('wifi_db/clean_dataset.txt')
 noisy_dataset = np.loadtxt('wifi_db/noisy_dataset.txt')
 room_index = 7
 
+
+def get_cr(model, data):
+    labels_predictions = [(prediction(model, row), row[room_index]) for row in data]
+    cm = confusion_matrix(labels_predictions)
+    return classification_rate(cm)
+
 def prediction(node, row):
+    
     if node['leaf']:
         return node['value']
 
@@ -16,69 +23,120 @@ def prediction(node, row):
     else:
         return prediction(node['right'], row)
 
+#check if the trees are identical
+def isEqual(tree1, tree2):
+    if tree1 == tree2:
+        return True # TIM FIX THIS
+    attri = (tree1['attribute'] == tree2['attribute'])
+    print(attri)
+    val = (tree1['value'] == tree2['value'])
+    print(val)
+    leaf = (tree1['leaf'] == tree2['leaf'])
+    print (leaf)
+    cnt = (tree1['count'] == tree2['count'])
+    print(cnt)
+    return attri and val and leaf and cnt and isEqual(tree1['left'], tree2['left']) and isEqual(tree1['right'], tree2['right'])
+
 def evaluation(dataset):
     shuffle(dataset)
     k = 10
+    j = 9
 
-    for i in range(k-1): #k-1 for validation
-        # (training_data, test_data) = k_fold_split(dataset, k, i)
-        # Split the data into training, test, validation
-        (training_data, test_data, validation_data) = k_fold_validation_split(dataset, k, i)
-        # Build the model with the training data
-        (trained_model, depth) = decision_tree_learning(training_data, 0)
+    for test_i in range(k): #k-1 for validation
+        # Split the data into training + validation, test
+        (training_validation_data, test_data) = k_fold_split(dataset, k, test_i)
+    
+        test_scores = [] # this is the average test score for all the pruned trees combined
 
-        labels_predictions = [(prediction(trained_model, row), row[room_index]) for row in validation_data]
+        for validation_i in range(k):
+            # Split the data into training, validation
+            (training_data, validation_data) = k_fold_split(training_validation_data, k, validation_i)
+            # Build the model with the training data
+            (trained_model, _) = decision_tree_learning(training_data, 0)
+            test_score_before = get_cr(trained_model, test_data)
 
-        cm_before_pruning = confusion_matrix(labels_predictions)
-        recall_before_pruning = recall(cm_before_pruning)
-        precision__before_pruning = precision(cm_before_pruning)
-        cr_before_pruning = classification_rate(cm_before_pruning)
-        F1_before_pruning = F1_measure(cm_before_pruning)
+            # labels_predictions_before_pruning = get_prediction(trained_model, validation_data)
+            # # Here we calculate te CR before the pruning, and pass it into the prune function to compare with the pruned tree
+            # cm_before_pruning = confusion_matrix(labels_predictions_before_pruning)
+            cr_before_pruning = get_cr(trained_model, validation_data)
 
-        #BEFORE PRUNING
-        print("Before Pruning Confustion matrix: ")
-        print(cm_before_pruning)
-        print("Recall: " + str(recall_before_pruning))
-        print("Precision: " + str(precision__before_pruning))
-        print("classification_rate: "+str(cr_before_pruning))
-        print("F1_measure: "+ str(F1_before_pruning)+"\n\n")
+            # print("Before Pruning: ")
+            # print("classification_rate: " + str(cr_before_pruning))
+            # print("\n\n")
 
-        # Prune the model until all the metrics increase
-        # TODO IMPLEMENT PRUNING
-        # TODO Print out the metrics again and also the difference
+            pruned_tree = prune_tree(trained_model, cr_before_pruning, validation_data)
 
-        #DFS 
-        # While there are node with 2 leaves not visited
-        #   make 2 new models where 1 model contains the left leaf as the node and the other thr right leaf as the nide 
-        #   run validation data on the new models
-        #   choose the 'better' one between the pruned model and the best one
-        #       Keep the pruning if it has
-        #       Revert the prune if it has not
+            # prune it the second time to see if there are any changes
 
+            new_tree = prune_tree(pruned_tree, get_cr(pruned_tree, validation_data), validation_data)
+
+            # we will now start to prune this trained model until it does not change
+
+            while not isEqual(new_tree, pruned_tree):
+                pruned_tree = new_tree  # swap the previous one
+                cr_new_tree = get_cr(pruned_tree, validation_data)
+                new_tree = prune_tree(new_tree, cr_new_tree, validation_data)
+            
+            # The new_tree is the Final pruned model.
+            # we obtain the test_score of the final pruned model for this validation data set
+            test_score = get_cr(new_tree, test_data)
+
+            # we get the validation error for the final pruned tree
+
+            validation_error = 1 - test_score
+            test_scores.append(test_score)
+            print("final test score for this prune tree: " + str(test_score))
+            print("the difference between the scores :" + str(test_score_before - test_score))
         
 
+    
 
-        # Prune the trained trained_model
-        # Common approach with decision trees
-        # Go through all the nodes that are only connected to leaves and check if the accuracy on the validation dataset would increase if this node is turned into a leaf.
-        # You need to do this recursively as when you turn nodes into leaves, you might create new nodes that are connected to two leaves.
+def prune_tree(node, cr_before_pruning, validation_data, parent=None, parent_side=None, root=None):
+    if root is None:
+        root = node
 
-        #AFTER PRUNING
+    if node['leaf']:
+        return node
 
-def find_prun_models(node):
-    # find the left most unvisited node that has 2 leaf nodes
-    node[]
-    left = node["left"]
-    right = node["right"]
-    if left["leaf"] and right["leaf"]:
-        if not node["pruned"]: 
-            # do pruning
+    # Our pruning algorithm does a depth first search and prune the left most node first then check the rest.
+    node['left'] = prune_tree(node['left'], cr_before_pruning, validation_data, node, 'left', root)
+    node['right'] = prune_tree(node['right'], cr_before_pruning, validation_data, node, 'right', root)
 
+    if parent and node['left'] and node['left']['leaf'] and node['right'] and node['right']['leaf']:
+        #FIND THE MAJORITY OF LEFT AND RIGHT
+        if node['left']['count'] > node['right']['count']:
+            parent[parent_side] = node['left'] # This alters the root in place
         else:
-            # so this node has been pruned before and it did not improve
-            # go to the parent and find th
+            parent[parent_side] = node['right'] # This alters the root in place
+        
+        # See if the prunning has increased the cr_before pruning
+        cr_after_pruning = get_cr(root, validation_data)
 
+        if cr_after_pruning <= cr_before_pruning:
+            # Prunning did not improve the CR
+            parent[parent_side] = node # reset the parent node to the original.
 
+    return node
+
+test_tree = {
+    'left': {
+        'left': { 'leaf': True },
+        'right': {
+            'left': { 'leaf': True, 'value': 1 },
+            'right': { 'leaf': True, 'value': 2 },
+            'leaf': False
+        },
+        'leaf': False
+    },
+    'right': {
+        'left': { 'leaf': True },
+        'right': { 'leaf': True },
+        'leaf': False
+    },
+    'leaf': False
+}
+# print(test_tree)
+# print(prune_tree(test_tree))
 
 def k_fold_split(dataset, k, index):
     test_size = int(len(dataset) / k)
@@ -93,30 +151,11 @@ def k_fold_split(dataset, k, index):
 
     return (training_data, test_data)
 
-def k_fold_validation_split(dataset, k, index):
-    split_size = int(len(dataset) / k)
-    validation_start_index = (index + 1) * split_size
-    validation_end_index = validation_start_index + split_size
-
-    data_before = np.array(dataset[split_size:validation_start_index])
-    data_after = np.array(dataset[validation_end_index:len(dataset)-1])
-    training_data = np.concatenate((data_before, data_after), axis=0)
-
-    test_data = np.array(dataset[0:split_size])
-
-    validation_data = np.array(dataset[validation_start_index: validation_end_index])
-
-    return (training_data, test_data, validation_data)
-
-
 # def confussion_matrix(labels_predictions):
 #   pass
 
-evaluation(clean_dataset)
-# evaluation(noisy_dataset)
+# evaluation(clean_dataset)
+evaluation(noisy_dataset)
+# (dt, depth) = decision_tree_learning(clean_dataset, 0)
+# print(isEqual(dt, dt))
 
-
-if __name__ == "__main__":
-
-
-    pass

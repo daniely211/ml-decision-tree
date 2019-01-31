@@ -54,8 +54,7 @@ def find_best_gain(split_points, sorted_dataset, attribute):
     gain_point = (float('-inf'), None)
 
     for split_point in split_points:
-        left = sorted_dataset[sorted_dataset[:,attribute] < split_point]
-        right = sorted_dataset[sorted_dataset[:,attribute] > split_point]
+        (left, right) = split_data(sorted_dataset, attribute, split_point)
         curr_gain = gain(sorted_dataset, left, right)
 
         if curr_gain > max_gain:
@@ -93,11 +92,8 @@ def gain(all, left, right):
     return entropy(all) - remainder(left, right)
 
 def split_data(dataset, attribute, value):
-    # sort by col value
-    sorted_dataset = dataset[dataset[:,attribute].argsort()]
-
-    left = sorted_dataset[sorted_dataset[:,attribute] < value]
-    right = sorted_dataset[sorted_dataset[:,attribute] > value]
+    left = dataset[dataset[:,attribute] < value]
+    right = dataset[dataset[:,attribute] > value]
 
     return (left, right)
 
@@ -106,12 +102,15 @@ def decision_tree_learning(dataset, depth):
     same_class = np.all(dataset[0][label_col] == dataset[:,label_col])
 
     if same_class:
-        node = {"attribute": None, "value": dataset[0][label_col], "left": None, "right": None, "leaf": True}
+        node = {"attribute": None, "value": dataset[0][label_col], "left": None, "right": None, "leaf": True, "count": len(dataset)}
         return (node, depth)
     else:
         (value, attribute) = find_split(dataset)
+        # sort by col value
+        sorted_dataset = dataset[dataset[:,attribute].argsort()]
+
         (left, right) = split_data(dataset, attribute, value)
         (left_branch, left_depth) = decision_tree_learning(left, depth + 1)
         (right_branch, right_depth) = decision_tree_learning(right, depth + 1)
-        node = {"attribute": attribute, "value": value, "left": left_branch, "right": right_branch, "leaf": False, "prune": False}
+        node = {"attribute": attribute, "value": value, "left": left_branch, "right": right_branch, "leaf": False, "count": 0}
         return (node, max(left_depth, right_depth))
