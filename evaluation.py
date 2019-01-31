@@ -52,16 +52,17 @@ def evaluation(dataset):
             # Split the data into training, validation
             (training_data, validation_data) = k_fold_split(training_validation_data, k, validation_i)
             # Build the model with the training data
-            (trained_model, depth) = decision_tree_learning(training_data, 0)
+            (trained_model, _) = decision_tree_learning(training_data, 0)
+            test_score_before = get_cr(trained_model, test_data)
 
             # labels_predictions_before_pruning = get_prediction(trained_model, validation_data)
             # # Here we calculate te CR before the pruning, and pass it into the prune function to compare with the pruned tree
             # cm_before_pruning = confusion_matrix(labels_predictions_before_pruning)
             cr_before_pruning = get_cr(trained_model, validation_data)
 
-            print("Before Pruning: ")
-            print("classification_rate: " + str(cr_before_pruning))
-            print("\n\n")
+            # print("Before Pruning: ")
+            # print("classification_rate: " + str(cr_before_pruning))
+            # print("\n\n")
 
             pruned_tree = prune_tree(trained_model, cr_before_pruning, validation_data)
 
@@ -78,7 +79,6 @@ def evaluation(dataset):
             
             # The new_tree is the Final pruned model.
             # we obtain the test_score of the final pruned model for this validation data set
-
             test_score = get_cr(new_tree, test_data)
 
             # we get the validation error for the final pruned tree
@@ -86,6 +86,8 @@ def evaluation(dataset):
             validation_error = 1 - test_score
             test_scores.append(test_score)
             print("final test score for this prune tree: " + str(test_score))
+            print("the difference between the scores :" + str(test_score_before - test_score))
+        
 
     
 
