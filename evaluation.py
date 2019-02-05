@@ -23,63 +23,57 @@ def prediction(node, row):
     else:
         return prediction(node['right'], row)
 
-#check if the trees are identical
-# def isEqual(tree1, tree2):
-#     if tree1 == tree2:
-#         return True # TIM FIX THIS
-#     attri = (tree1['attribute'] == tree2['attribute'])
-#     # print(attri)
-#     val = (tree1['value'] == tree2['value'])
-#     # print(val)
-#     leaf = (tree1['leaf'] == tree2['leaf'])
-#     # print (leaf)
-#     cnt = (tree1['count'] == tree2['count'])
-#     # print(cnt)
-#     return attri and val and leaf and cnt and isEqual(tree1['left'], tree2['left']) and isEqual(tree1['right'], tree2['right'])
-
 def evaluation(dataset):
     shuffle(dataset)
     k = 10
     j = 9
-
-    for test_i in range(k): #k-1 for validation
+    avg_difs = np.array([])
+    avg_pruned = np.array([])
+    avg_unpruned = np.array([])
+    for test_i in range(k):
         # Split the data into training + validation, test
         (training_validation_data, test_data) = k_fold_split(dataset, k, test_i)
     
-        test_scores = [] # this is the average test score for all the pruned trees combined
+        pruned_test_scores = np.array([]) # this is the average test score for all the pruned trees combined
+        unpruned_test_scores = np.array([])
 
         for validation_i in range(k):
             # Split the data into training, validation
             (training_data, validation_data) = k_fold_split(training_validation_data, k, validation_i)
             # Build the model with the training data
+
             (trained_model, _) = decision_tree_learning(training_data, 0)
+
             test_score_before = get_cr(trained_model, test_data)
-            print ("Test score for the UNpruned tree: "+ str(test_score_before))
-
-
-            # labels_predictions_before_pruning = get_prediction(trained_model, validation_data)
-            # # Here we calculate te CR before the pruning, and pass it into the prune function to compare with the pruned tree
-            # cm_before_pruning = confusion_matrix(labels_predictions_before_pruning)
+            unpruned_test_scores = np.append(unpruned_test_scores, test_score_before)
+            # print ("Test score for the UNpruned tree: "+ str(test_score_before))
             cr_before_pruning = get_cr(trained_model, validation_data)
 
             # print("Before Pruning: ")
-            # print("classification_rate: " + str(cr_before_pruning))
-            # print("\n\n")
 
             pruned_tree = prune_tree(trained_model, cr_before_pruning, validation_data)
-            # prune it the second time to see if there are any changes
-            # print("the trees are: " + str(isEqual(trained_model, trained_model)))
-
-            # we will now start to prune this trained model until it does not change
-            # The new_tree is the Final pruned model.
-            # we obtain the test_score of the final pruned model for this validation data set
             test_score = get_cr(pruned_tree, test_data)
-            # we get the validation error for the final pruned tree
 
+            # we get the validation error for the final pruned tree
             # validation_error = 1 - test_score
-            test_scores.append(test_score)
-            print("final test score for this prune tree: " + str(test_score))
-            print("the difference between the scores :" + str(test_score - test_score_before))
+            pruned_test_scores = np.append(pruned_test_scores, test_score)
+            # print("final test score for this prune tree: " + str(test_score))
+            # print("the difference between the scores :" + str(test_score - test_score_before))
+
+        pruned_avg = np.mean(pruned_test_scores)
+        unpruned_avg = np.mean(unpruned_test_scores)
+        avg_dif = pruned_avg - unpruned_avg
+        avg_pruned = np.append(avg_pruned, pruned_avg)
+        avg_unpruned = np.append(avg_unpruned, unpruned_avg)
+        avg_difs = np.append(avg_difs, avg_dif)
+        print("********* RESULT **********")
+        print("Average difference between pruned and unpruned ="+str(avg_dif) + "\n\n")
+
+    print("************************ FINAL RESULT **********************")
+    print("The Average unpruned Classification rate =" + str(np.mean(avg_unpruned)))
+    print("The Average pruned Classification rate ="+str(np.mean(avg_pruned)))
+    print("The Average differences across all 10 test folds ="+str(np.mean(avg_difs)))
+    print("Happy Chinese New Year!")
 
 def prune_tree(node, cr_before_pruning, validation_data, parent=None, parent_side=None, root=None):
     if root is None:
@@ -111,13 +105,10 @@ def prune_tree(node, cr_before_pruning, validation_data, parent=None, parent_sid
             # print("NOT pruning !!!")
             return node
         else:
-            # print("Pruning !!!")
-            # print(cr_after_pruning)
-            # print(cr_before_pruning)
+            # Pruning improved the score so we return the leaf with the majority.
             return node[majority_side]
 
-
-
+    # not a node with 2 leafs simply return here
     return node
 
     
@@ -138,9 +129,7 @@ test_tree = {
             'leaf': False
         },
         'leaf': False
-    }
-        # print(test_tree)
-# print(prune_tree(test_tree))
+}
 
 def k_fold_split(dataset, k, index):
     test_size = int(len(dataset) / k)

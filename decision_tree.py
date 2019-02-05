@@ -127,4 +127,4 @@ def decision_tree_learning(dataset, depth):
             node = {"attribute": attribute, "value": value, "left": left_branch, "right": right_branch, "leaf": False, "count": 0}
             return (node, max(left_depth, right_depth))
 
-# print(decision_tree_learning(noisy_dataset, 0))
+print(decision_tree_learning(noisy_dataset, 0))
