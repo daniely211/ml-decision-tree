@@ -1,5 +1,4 @@
 import numpy as np
-import sys
 
 np.set_printoptions(threshold=float('inf'))
 
@@ -27,6 +26,8 @@ def find_split(dataset):
             max_gain = gain
             split_point_attr = (split_point, i)
 
+    # if split_point_attr == None:
+    #     print("didnt find a split in all the column")
     return split_point_attr
 
 
@@ -42,7 +43,7 @@ def find_split_points(sorted_dataset, attribute):
         val_next = sorted_dataset[i + 1][attribute]
         classification_next = sorted_dataset[i + 1][class_index]
 
-        if val != val_next:
+        if val != val_next and classification != classification_next:
             mid = (val + val_next) / 2
             split_points = np.append(split_points, mid)
 
@@ -97,6 +98,7 @@ def split_data(dataset, attribute, value):
 
     return (left, right)
 
+
 def decision_tree_learning(dataset, depth):
     label_col = len(dataset[0]) - 1
     same_class = np.all(dataset[0][label_col] == dataset[:,label_col])
@@ -105,12 +107,24 @@ def decision_tree_learning(dataset, depth):
         node = {"attribute": None, "value": dataset[0][label_col], "left": None, "right": None, "leaf": True, "count": len(dataset)}
         return (node, depth)
     else:
-        (value, attribute) = find_split(dataset)
-        # sort by col value
-        sorted_dataset = dataset[dataset[:,attribute].argsort()]
+        result = find_split(dataset)
+        if result == None:
+            # Could not find a split , will collapse this node into the majority.
+            bin_count = np.bincount(dataset[:,label_col].astype(int))
+            value = np.argmax(bin_count)
+            count = bin_count[value]
+            node = {"attribute": None, "value": value, "left": None, "right": None, "leaf": True,
+                    "count": count}
+            return (node, depth)
+        else:
+            (value, attribute) = result
+            # sort by col value
+            sorted_dataset = dataset[dataset[:, attribute].argsort()]
 
-        (left, right) = split_data(dataset, attribute, value)
-        (left_branch, left_depth) = decision_tree_learning(left, depth + 1)
-        (right_branch, right_depth) = decision_tree_learning(right, depth + 1)
-        node = {"attribute": attribute, "value": value, "left": left_branch, "right": right_branch, "leaf": False, "count": 0}
-        return (node, max(left_depth, right_depth))
+            (left, right) = split_data(sorted_dataset, attribute, value)
+            (left_branch, left_depth) = decision_tree_learning(left, depth + 1)
+            (right_branch, right_depth) = decision_tree_learning(right, depth + 1)
+            node = {"attribute": attribute, "value": value, "left": left_branch, "right": right_branch, "leaf": False, "count": 0}
+            return (node, max(left_depth, right_depth))
+
+# print(decision_tree_learning(noisy_dataset, 0))

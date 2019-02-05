@@ -24,18 +24,18 @@ def prediction(node, row):
         return prediction(node['right'], row)
 
 #check if the trees are identical
-def isEqual(tree1, tree2):
-    if tree1 == tree2:
-        return True # TIM FIX THIS
-    attri = (tree1['attribute'] == tree2['attribute'])
-    print(attri)
-    val = (tree1['value'] == tree2['value'])
-    print(val)
-    leaf = (tree1['leaf'] == tree2['leaf'])
-    print (leaf)
-    cnt = (tree1['count'] == tree2['count'])
-    print(cnt)
-    return attri and val and leaf and cnt and isEqual(tree1['left'], tree2['left']) and isEqual(tree1['right'], tree2['right'])
+# def isEqual(tree1, tree2):
+#     if tree1 == tree2:
+#         return True # TIM FIX THIS
+#     attri = (tree1['attribute'] == tree2['attribute'])
+#     # print(attri)
+#     val = (tree1['value'] == tree2['value'])
+#     # print(val)
+#     leaf = (tree1['leaf'] == tree2['leaf'])
+#     # print (leaf)
+#     cnt = (tree1['count'] == tree2['count'])
+#     # print(cnt)
+#     return attri and val and leaf and cnt and isEqual(tree1['left'], tree2['left']) and isEqual(tree1['right'], tree2['right'])
 
 def evaluation(dataset):
     shuffle(dataset)
@@ -54,6 +54,8 @@ def evaluation(dataset):
             # Build the model with the training data
             (trained_model, _) = decision_tree_learning(training_data, 0)
             test_score_before = get_cr(trained_model, test_data)
+            print ("Test score for the UNpruned tree: "+ str(test_score_before))
+
 
             # labels_predictions_before_pruning = get_prediction(trained_model, validation_data)
             # # Here we calculate te CR before the pruning, and pass it into the prune function to compare with the pruned tree
@@ -65,31 +67,19 @@ def evaluation(dataset):
             # print("\n\n")
 
             pruned_tree = prune_tree(trained_model, cr_before_pruning, validation_data)
-
             # prune it the second time to see if there are any changes
-
-            new_tree = prune_tree(pruned_tree, get_cr(pruned_tree, validation_data), validation_data)
+            # print("the trees are: " + str(isEqual(trained_model, trained_model)))
 
             # we will now start to prune this trained model until it does not change
-
-            while not isEqual(new_tree, pruned_tree):
-                pruned_tree = new_tree  # swap the previous one
-                cr_new_tree = get_cr(pruned_tree, validation_data)
-                new_tree = prune_tree(new_tree, cr_new_tree, validation_data)
-            
             # The new_tree is the Final pruned model.
             # we obtain the test_score of the final pruned model for this validation data set
-            test_score = get_cr(new_tree, test_data)
-
+            test_score = get_cr(pruned_tree, test_data)
             # we get the validation error for the final pruned tree
 
-            validation_error = 1 - test_score
+            # validation_error = 1 - test_score
             test_scores.append(test_score)
             print("final test score for this prune tree: " + str(test_score))
-            print("the difference between the scores :" + str(test_score_before - test_score))
-        
-
-    
+            print("the difference between the scores :" + str(test_score - test_score_before))
 
 def prune_tree(node, cr_before_pruning, validation_data, parent=None, parent_side=None, root=None):
     if root is None:
@@ -103,39 +93,53 @@ def prune_tree(node, cr_before_pruning, validation_data, parent=None, parent_sid
     node['right'] = prune_tree(node['right'], cr_before_pruning, validation_data, node, 'right', root)
 
     if parent and node['left'] and node['left']['leaf'] and node['right'] and node['right']['leaf']:
-        #FIND THE MAJORITY OF LEFT AND RIGHT
+        # FIND THE MAJORITY OF LEFT AND RIGHT
+        majority_side = 'left'
         if node['left']['count'] > node['right']['count']:
-            parent[parent_side] = node['left'] # This alters the root in place
+            parent[parent_side] = node['left'] # This alters the root in place so we can test if the pruning worked
         else:
             parent[parent_side] = node['right'] # This alters the root in place
-        
+            majority_side = 'right'
+
         # See if the prunning has increased the cr_before pruning
         cr_after_pruning = get_cr(root, validation_data)
 
+        parent[parent_side] = node  # reset the parent node to the original
+
         if cr_after_pruning <= cr_before_pruning:
             # Prunning did not improve the CR
-            parent[parent_side] = node # reset the parent node to the original.
+            # print("NOT pruning !!!")
+            return node
+        else:
+            # print("Pruning !!!")
+            # print(cr_after_pruning)
+            # print(cr_before_pruning)
+            return node[majority_side]
+
+
 
     return node
 
+    
+
 test_tree = {
-    'left': {
-        'left': { 'leaf': True },
+        'left': {
+            'left': { 'leaf': True },
+            'right': {
+                'left': { 'leaf': True, 'value': 1 },
+                'right': { 'leaf': True, 'value': 2 },
+                'leaf': False
+            },
+            'leaf': False
+        },
         'right': {
-            'left': { 'leaf': True, 'value': 1 },
-            'right': { 'leaf': True, 'value': 2 },
+            'left': { 'leaf': True },
+            'right': { 'leaf': True },
             'leaf': False
         },
         'leaf': False
-    },
-    'right': {
-        'left': { 'leaf': True },
-        'right': { 'leaf': True },
-        'leaf': False
-    },
-    'leaf': False
-}
-# print(test_tree)
+    }
+        # print(test_tree)
 # print(prune_tree(test_tree))
 
 def k_fold_split(dataset, k, index):
