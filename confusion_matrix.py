@@ -21,14 +21,6 @@ def TP(confusion_matrix):
         tp[i] = confusion_matrix[i][i]
     return tp
 
-# output: an array of true negtive per class
-def TN(confusion_matrix):
-    tn = np.zeros(4, dtype = int)
-    sum = np.sum(TP(confusion_matrix))
-    for i in range(0,4):
-        tn[i] = sum - confusion_matrix[i][i]
-    return tn
-
 # output: an array of false positive per class
 def FP(confusion_matrix):
     fp = np.zeros(4, dtype = int)
@@ -47,6 +39,14 @@ def FN(confusion_matrix):
         fn[i] = sum[i] - confusion_matrix[i][i]
     return fn
 
+# output: an array of true negtive per class
+def TN(confusion_matrix):
+    tn = np.zeros(4, dtype = int)
+    sum = np.sum(confusion_matrix)
+    tn = sum * np.ones(4) - TP(confusion_matrix) - FP(confusion_matrix) - FN(confusion_matrix)
+    return tn
+    
+
 def recall(cm):
     return sum(TP(cm) / (TP(cm) + FN(cm)))/4
 
@@ -61,6 +61,10 @@ def F1_measure(cm):
     return 2 * precision(cm) * recall(cm) / (precision(cm) + recall(cm))
 
 # labels = np.array([(1,1), (1,2), (2,3), (3,3), (3,2), (4,1), (4,4)])
+# print(TN(confusion_matrix(labels)))
+# cm = confusion_matrix(labels)
+# print(cm)
+# plot_confusion_matrix(cm,[1,2,3,4], normalize=False, title='Confusion matrix', cmap=plt.cm.Blues)
 # print(recall(confusion_matrix(labels)))
 # print(precision(confusion_matrix(labels)))
 # print(classification_rate(confusion_matrix(labels)))
