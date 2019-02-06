@@ -10,7 +10,13 @@ room_index = 7
 def get_cr(tree, data):
     labels_predictions = [(prediction(tree, row), row[room_index]) for row in data]
     cm = confusion_matrix(labels_predictions)
-    return classification_rate(cm)
+
+    cr = 0
+
+    for i in range(4):
+        cr += classification_rate(cm, i)
+
+    return cr / 4
 
 def prediction(node, row):
     if node['leaf']:
@@ -22,6 +28,7 @@ def prediction(node, row):
         return prediction(node['right'], row)
 
 def evaluation(dataset):
+    print("Shuffling dataset...")
     shuffle(dataset)
 
     k = 10
@@ -30,7 +37,8 @@ def evaluation(dataset):
     avg_unpruned = np.array([])
 
     for test_i in range(k):
-        # Split the data into training + validation, test
+        print("Splitting into training & validation fold and test fold...")
+        # split the data into training + validation, test
         (training_validation_data, test_data) = k_fold_split(dataset, k, test_i)
 
         pruned_test_scores = np.array([])
@@ -49,7 +57,7 @@ def evaluation(dataset):
             test_score_before = get_cr(trained_tree, test_data)
             unpruned_test_scores = np.append(unpruned_test_scores, test_score_before)
 
-            (pruned_tree, depth) = prune_tree(trained_tree, validation_data, test_data)
+            (pruned_tree, depth) = prune_tree(trained_tree, validation_data)
 
             # print(pruned_tree)
             print("**********************************************")
@@ -68,12 +76,11 @@ def evaluation(dataset):
         print("Average difference between pruned and unpruned: " + str(avg_dif) + "\n\n")
 
     print("************************ FINAL RESULT **********************")
-    print("The Average unpruned Classification rate: " + str(np.mean(avg_unpruned)))
-    print("The Average pruned Classification rate: "+str(np.mean(avg_pruned)))
-    print("The Average differences across all 10 test folds: "+str(np.mean(avg_difs)))
-    print("Happy Chinese New Year!")
+    print("average unpruned classification rate: " + str(np.mean(avg_unpruned)))
+    print("average pruned classification rate: " + str(np.mean(avg_pruned)))
+    print("average differences across all 10 test folds: " + str(np.mean(avg_difs)))
 
-def prune_tree(node, test_data, validation_data, parent=None, parent_side=None, root=None, depth=0):
+def prune_tree(node, validation_data, parent=None, parent_side=None, root=None, depth=0):
     if root is None:
         root = node
 
@@ -81,15 +88,14 @@ def prune_tree(node, test_data, validation_data, parent=None, parent_side=None, 
         return (node, depth)
 
     # Our pruning algorithm does a depth first search and prune the left most node first then check the rest.
-    (node['left'], depth_left) = prune_tree(node['left'], test_data, validation_data, node, 'left', root, depth + 1)
-    (node['right'], depth_right) = prune_tree(node['right'], test_data, validation_data, node, 'right', root, depth + 1)
+    (node['left'], depth_left) = prune_tree(node['left'], validation_data, node, 'left', root, depth + 1)
+    (node['right'], depth_right) = prune_tree(node['right'], validation_data, node, 'right', root, depth + 1)
 
     # conditions to allow a node to be pruned
     if parent and node['left'] and node['left']['leaf'] and node['right'] and node['right']['leaf']:
 
         # capture classification rate before pruning
         cr_before_pruning = get_cr(root, validation_data)
-        cr_before_pruning_test = get_cr(root, test_data)
 
         # replace the current node with a leaf who's value is the most common
         # classification
@@ -104,12 +110,10 @@ def prune_tree(node, test_data, validation_data, parent=None, parent_side=None, 
 
         # capture classification rate after pruning
         cr_after_pruning = get_cr(root, validation_data)
-        cr_after_pruning_test = get_cr(root, test_data)
 
         # check if pruning the node improves the classification rate
         if cr_after_pruning < cr_before_pruning:
             # classification error worsened, reset to original node
-            parent[parent_side] = node
             return (node, max(depth_left, depth_right))
         else:
             # classification rate improved, replace pruned node with newly

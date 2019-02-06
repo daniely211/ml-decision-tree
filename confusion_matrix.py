@@ -4,61 +4,76 @@ def confusion_matrix(labels):
     '''
     :param labels = [(ground_truth1, prediction1), (ground_truth2, prediction2), ...]
     '''
-    confusion_matrix = np.zeros((4,4),dtype = int)
+    confusion_matrix = np.zeros((4, 4), dtype=int)
 
-    for pair in labels:
-        ground_truth = int(pair[0])
-        prediction = int(pair[1])
-        confusion_matrix[ground_truth-1][prediction-1] += 1
+    for (ground_truth, prediction) in labels:
+        confusion_matrix[int(ground_truth) - 1][int(prediction) - 1] += 1
 
     return confusion_matrix
 
 # input: confusion_matrix
 # output: an array of true positive per class
-def TP(confusion_matrix):
-    tp = np.zeros(4, dtype = int)
-    for i in range(0,4):
-        tp[i] = confusion_matrix[i][i]
-    return tp
+def TP(confusion_matrix, classification):
+    return confusion_matrix[classification][classification]
+    # tp = np.zeros(4, dtype = int)
+    # for i in range(0,4):
+    #     tp[i] = confusion_matrix[i][i]
+    # return tp
 
 # output: an array of false positive per class
-def FP(confusion_matrix):
-    fp = np.zeros(4, dtype = int)
-    sum = np.zeros(4, dtype = int)
-    for i in range(0,4):
-        sum[i] = np.sum(confusion_matrix[:,i])
-        fp[i] = sum[i] - confusion_matrix[i][i]
-    return fp
+def FP(confusion_matrix, classification):
+    sum = 0
+
+    for i in range(4):
+        if i != classification:
+            sum += confusion_matrix[i][classification]
+
+    return sum
+
+    # fp = np.zeros(4, dtype = int)
+    # sum = np.zeros(4, dtype = int)
+    # for i in range(0,4):
+    #     sum[i] = np.sum(confusion_matrix[:,i])
+    #     fp[i] = sum[i] - confusion_matrix[i][i]
+    # return fp
 
 # output: an array of false negtive per class
-def FN(confusion_matrix):
-    fn = np.zeros(4, dtype = int)
-    sum = np.zeros(4, dtype = int)
-    for i in range(0,4):
-        sum[i] = np.sum(confusion_matrix[i,:])
-        fn[i] = sum[i] - confusion_matrix[i][i]
-    return fn
+def FN(confusion_matrix, classification):
+    sum = 0
+
+    for i in range(4):
+        if i != classification:
+            sum += confusion_matrix[classification][i]
+
+    return sum
+
+    # fn = np.zeros(4, dtype = int)
+    # sum = np.zeros(4, dtype = int)
+    # for i in range(0,4):
+    #     sum[i] = np.sum(confusion_matrix[i,:])
+    #     fn[i] = sum[i] - confusion_matrix[i][i]
+    # return fn
 
 # output: an array of true negtive per class
-def TN(confusion_matrix):
-    tn = np.zeros(4, dtype = int)
-    sum = np.sum(confusion_matrix)
-    tn = sum * np.ones(4) - TP(confusion_matrix) - FP(confusion_matrix) - FN(confusion_matrix)
-    return tn
-    
+def TN(confusion_matrix, classification):
+    return np.trace(confusion_matrix) - confusion_matrix[classification][classification]
+    # tn = np.zeros(4, dtype = int)
+    # sum = np.sum(confusion_matrix)
+    # tn = sum * np.ones(4) - TP(confusion_matrix) - FP(confusion_matrix) - FN(confusion_matrix)
+    # return tn
 
-def recall(cm):
-    return sum(TP(cm) / (TP(cm) + FN(cm)))/4
+def recall(cm, classification):
+    return TP(cm, classification) / (TP(cm, classification) + FN(cm, classification))
 
-def precision(cm):
-    return sum(TP(cm) / (TP(cm) + FP(cm)))/4
+def precision(cm, classification):
+    return TP(cm, classification) / (TP(cm, classification) + FP(cm, classification))
 
-def classification_rate(cm):
-    return sum((TP(cm) + TN(cm)) / (TP(cm) + TN(cm) + FP(cm) +FN(cm)))/4
-    
+def classification_rate(cm, classification):
+    return np.trace(cm) / np.sum(cm)
+    # return sum((TP(cm) + TN(cm)) / (TP(cm) + TN(cm) + FP(cm) +FN(cm)))/4
 
-def F1_measure(cm):
-    return 2 * precision(cm) * recall(cm) / (precision(cm) + recall(cm))
+def F1_measure(cm, classification):
+    return (2 * precision(cm, classification) * recall(cm, classification)) / (precision(cm, classification) + recall(cm, classification))
 
 # labels = np.array([(1,1), (1,2), (2,3), (3,3), (3,2), (4,1), (4,4)])
 # print(TN(confusion_matrix(labels)))
