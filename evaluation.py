@@ -50,20 +50,14 @@ def evaluation(dataset):
 
             # build the model with the training data
             (trained_tree, _) = decision_tree_learning(training_data)
-
-            # print(trained_tree)
-            # print("**********************************************")
-
             test_score_before = get_cr(trained_tree, test_data)
             unpruned_test_scores = np.append(unpruned_test_scores, test_score_before)
 
+            # prune the tree
             (pruned_tree, depth) = prune_tree(trained_tree, validation_data)
 
-            # print(pruned_tree)
-            print("**********************************************")
-
+            # get classification rate on pruned tree
             test_score_after = get_cr(pruned_tree, test_data)
-
             pruned_test_scores = np.append(pruned_test_scores, test_score_after)
 
         pruned_avg = np.mean(pruned_test_scores)
@@ -87,7 +81,8 @@ def prune_tree(node, validation_data, parent=None, parent_side=None, root=None, 
     if node['leaf']:
         return (node, depth)
 
-    # Our pruning algorithm does a depth first search and prune the left most node first then check the rest.
+    # perform a depth first search to allow nodes and their parents to be
+    # recursively pruned
     (node['left'], depth_left) = prune_tree(node['left'], validation_data, node, 'left', root, depth + 1)
     (node['right'], depth_right) = prune_tree(node['right'], validation_data, node, 'right', root, depth + 1)
 
@@ -138,5 +133,3 @@ def k_fold_split(dataset, k, index):
 
 # evaluation(clean_dataset)
 evaluation(noisy_dataset)
-# (dt, depth) = decision_tree_learning(clean_dataset)
-# print(isEqual(dt, dt))
