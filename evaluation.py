@@ -24,6 +24,7 @@ def prediction(node, row):
         return prediction(node['right'], row)
 
 def evaluation(dataset):
+
     shuffle(dataset)
     k = 10
     j = 9
@@ -83,22 +84,15 @@ def prune_tree(node, validation_data, parent=None, parent_side=None, root=None, 
         return (node, depth)
 
     # Our pruning algorithm does a depth first search and prune the left most node first then check the rest.
-    (node['left'], depth_left) = prune_tree(node['left'], validation_data, node, 'left', root, depth+1)
-    (node['right'], depth_right) = prune_tree(node['right'], validation_data, node, 'right', root, depth+1)
+    (node['left'], depth_left) = prune_tree(node['left'], validation_data, node, 'left', root, depth + 1)
+    (node['right'], depth_right) = prune_tree(node['right'], validation_data, node, 'right', root, depth + 1)
 
     if parent and node['left'] and node['left']['leaf'] and node['right'] and node['right']['leaf']:
         # Replace the courrent node to be the majority and then see if that improves the CR
         cr_before_pruning = get_cr(root, validation_data)
 
-        # if node['left']['count'] > node['right']['count']:
-        #     parent[parent_side] = node['left'] # This alters the root in place so we can test if the pruning worked
-        # else:
-        #     parent[parent_side] = node['right'] # This alters the root in place
-        #     majority_side = 'right'
-
-
         # replace the node to be the majority and see if the CR imporves
-        pruned_node = {"attribute": None, "value": node['majority'], "left": None, "right": None, "leaf": True}
+        pruned_node = {"attribute": None, "value": node['mode_class'], "left": None, "right": None, "leaf": True}
         parent[parent_side] = pruned_node
 
         # See if the prunning has increased the cr_before pruning
@@ -117,26 +111,6 @@ def prune_tree(node, validation_data, parent=None, parent_side=None, root=None, 
     # not a node with 2 leafs simply return here
     return node, max(depth_left, depth_right)
 
-    
-
-test_tree = {
-        'left': {
-            'left': { 'leaf': True },
-            'right': {
-                'left': { 'leaf': True, 'value': 1 },
-                'right': { 'leaf': True, 'value': 2 },
-                'leaf': False
-            },
-            'leaf': False
-        },
-        'right': {
-            'left': { 'leaf': True },
-            'right': { 'leaf': True },
-            'leaf': False
-        },
-        'leaf': False
-}
-
 def k_fold_split(dataset, k, index):
     test_size = int(len(dataset) / k)
     start_index = index * test_size
@@ -150,11 +124,6 @@ def k_fold_split(dataset, k, index):
 
     return (training_data, test_data)
 
-# def confussion_matrix(labels_predictions):
-#   pass
-
 # evaluation(clean_dataset)
 # evaluation(noisy_dataset)
-# (dt, depth) = decision_tree_learning(clean_dataset, 0)
-# print(isEqual(dt, dt))
 

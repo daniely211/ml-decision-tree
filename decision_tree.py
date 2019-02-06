@@ -110,10 +110,10 @@ def decision_tree_learning(dataset, depth):
         # EVERY NODE WILL STORE THE MAJORTIY OF ITS CHILDREN FOR PRUNING
         result = find_split(dataset)
         if result == None:
-            # Could not find a split , will collapse this node into the majority.
+            # Could not find a split , will collapse this node into the most common class.
             bin_count = np.bincount(dataset[:,label_col].astype(int))
-            majority = np.argmax(bin_count)
-            node = {"attribute": None, "value": majority, "left": None, "right": None, "leaf": True}
+            mode_class = np.argmax(bin_count)
+            node = {"attribute": None, "value": mode_class, "left": None, "right": None, "leaf": True}
             return (node, depth)
         else:
             (value, attribute) = result
@@ -126,9 +126,9 @@ def decision_tree_learning(dataset, depth):
 
             # Here the node stores the majority class to be compared later on
             bin_count = np.bincount(dataset[:, label_col].astype(int))
-            majority = np.argmax(bin_count)
+            mode_class = np.argmax(bin_count)
 
-            node = {"attribute": attribute, "value": value, "left": left_branch, "right": right_branch, "leaf": False, "majority":majority}
+            node = {"attribute": attribute, "value": value, "left": left_branch, "right": right_branch, "leaf": False, "mode_class":mode_class}
             return (node, max(left_depth, right_depth))
 
 # dt ,_ = decision_tree_learning(noisy_dataset, 0)

@@ -115,6 +115,7 @@ noisy_dataset = np.loadtxt('wifi_db/noisy_dataset.txt')
 # decisionTree = merge_keys(retrieve_tree(dt))
 # print(decisionTree)
 (training_data, test_data) = k_fold_split(clean_dataset, 10, 3)
+# (training_data, test_data) = k_fold_split(noisy_dataset, 10, 3)
 (dt_unpruned, depth_1) = decision_tree.decision_tree_learning(training_data, 0)
 (pruned_tree, depth_2) = prune_tree(dt_unpruned, test_data)
 
