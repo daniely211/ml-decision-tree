@@ -7,8 +7,8 @@ clean_dataset = np.loadtxt('wifi_db/clean_dataset.txt')
 noisy_dataset = np.loadtxt('wifi_db/noisy_dataset.txt')
 room_index = 7
 
-def get_cr(model, data):
-    labels_predictions = [(prediction(model, row), row[room_index]) for row in data]
+def get_cr(tree, data):
+    labels_predictions = [(prediction(tree, row), row[room_index]) for row in data]
     cm = confusion_matrix(labels_predictions)
     return classification_rate(cm)
 
@@ -23,37 +23,40 @@ def prediction(node, row):
 
 def evaluation(dataset):
     shuffle(dataset)
+
     k = 10
     avg_difs = np.array([])
     avg_pruned = np.array([])
     avg_unpruned = np.array([])
+
     for test_i in range(k):
         # Split the data into training + validation, test
         (training_validation_data, test_data) = k_fold_split(dataset, k, test_i)
 
-        pruned_test_scores = np.array([]) # this is the average test score for all the pruned trees combined
+        pruned_test_scores = np.array([])
         unpruned_test_scores = np.array([])
 
         for validation_i in range(k - 1):
-            # Split the data into training, validation
+            # split the data into training, validation
             (training_data, validation_data) = k_fold_split(training_validation_data, k - 1, validation_i)
 
-            # Build the model with the training data
-            (trained_model, _) = decision_tree_learning(training_data, 0)
+            # build the model with the training data
+            (trained_tree, _) = decision_tree_learning(training_data)
 
-            test_score_before = get_cr(trained_model, test_data)
+            # print(trained_tree)
+            # print("**********************************************")
+
+            test_score_before = get_cr(trained_tree, test_data)
             unpruned_test_scores = np.append(unpruned_test_scores, test_score_before)
-            cr_before_pruning = get_cr(trained_model, validation_data)
 
-            # print("Before Pruning: ")
+            (pruned_tree, depth) = prune_tree(trained_tree, validation_data, test_data)
 
-            (pruned_tree, depth) = prune_tree(trained_model, validation_data)
-            test_score = get_cr(pruned_tree, test_data)
+            # print(pruned_tree)
+            print("**********************************************")
 
-            # print("before: " + str(test_score_before))
-            # print("after: " + str(test_score))
+            test_score_after = get_cr(pruned_tree, test_data)
 
-            pruned_test_scores = np.append(pruned_test_scores, test_score)
+            pruned_test_scores = np.append(pruned_test_scores, test_score_after)
 
         pruned_avg = np.mean(pruned_test_scores)
         unpruned_avg = np.mean(unpruned_test_scores)
@@ -62,15 +65,15 @@ def evaluation(dataset):
         avg_unpruned = np.append(avg_unpruned, unpruned_avg)
         avg_difs = np.append(avg_difs, avg_dif)
         print("********* RESULT **********")
-        print("Average difference between pruned and unpruned ="+str(avg_dif) + "\n\n")
+        print("Average difference between pruned and unpruned: " + str(avg_dif) + "\n\n")
 
     print("************************ FINAL RESULT **********************")
-    print("The Average unpruned Classification rate =" + str(np.mean(avg_unpruned)))
-    print("The Average pruned Classification rate ="+str(np.mean(avg_pruned)))
-    print("The Average differences across all 10 test folds ="+str(np.mean(avg_difs)))
+    print("The Average unpruned Classification rate: " + str(np.mean(avg_unpruned)))
+    print("The Average pruned Classification rate: "+str(np.mean(avg_pruned)))
+    print("The Average differences across all 10 test folds: "+str(np.mean(avg_difs)))
     print("Happy Chinese New Year!")
 
-def prune_tree(node, validation_data, parent=None, parent_side=None, root=None, depth=0):
+def prune_tree(node, test_data, validation_data, parent=None, parent_side=None, root=None, depth=0):
     if root is None:
         root = node
 
@@ -78,39 +81,43 @@ def prune_tree(node, validation_data, parent=None, parent_side=None, root=None, 
         return (node, depth)
 
     # Our pruning algorithm does a depth first search and prune the left most node first then check the rest.
-    (node['left'], depth_left) = prune_tree(node['left'], validation_data, node, 'left', root, depth + 1)
-    (node['right'], depth_right) = prune_tree(node['right'], validation_data, node, 'right', root, depth + 1)
+    (node['left'], depth_left) = prune_tree(node['left'], test_data, validation_data, node, 'left', root, depth + 1)
+    (node['right'], depth_right) = prune_tree(node['right'], test_data, validation_data, node, 'right', root, depth + 1)
 
+    # conditions to allow a node to be pruned
     if parent and node['left'] and node['left']['leaf'] and node['right'] and node['right']['leaf']:
-        # Replace the courrent node to be the majority and then see if that improves the CR
+
+        # capture classification rate before pruning
         cr_before_pruning = get_cr(root, validation_data)
+        cr_before_pruning_test = get_cr(root, test_data)
 
-        # if node['left']['count'] > node['right']['count']:
-        #     parent[parent_side] = node['left'] # This alters the root in place so we can test if the pruning worked
-        # else:
-        #     parent[parent_side] = node['right'] # This alters the root in place
-        #     majority_side = 'right'
+        # replace the current node with a leaf who's value is the most common
+        # classification
+        new_leaf = {
+            "attribute": None,
+            "value": node['mode_class'],
+            "left": None,
+            "right": None,
+            "leaf": True
+        }
+        parent[parent_side] = new_leaf
 
-
-        # replace the node to be the majority and see if the CR imporves
-        pruned_node = {"attribute": None, "value": node['mode_class'], "left": None, "right": None, "leaf": True}
-        parent[parent_side] = pruned_node
-
-        # See if the prunning has increased the cr_before pruning
+        # capture classification rate after pruning
         cr_after_pruning = get_cr(root, validation_data)
-        parent[parent_side] = node  # reset the parent node to the original
+        cr_after_pruning_test = get_cr(root, test_data)
 
-        if cr_after_pruning <= cr_before_pruning:
-            # Prunning did not improve the CR
-            return node, max(depth_left, depth_right)
+        # check if pruning the node improves the classification rate
+        if cr_after_pruning < cr_before_pruning:
+            # classification error worsened, reset to original node
+            parent[parent_side] = node
+            return (node, max(depth_left, depth_right))
         else:
-            # print("Before pruning:" + str(cr_before_pruning))
-            # print("After pruning:" + str(cr_after_pruning))
-            # Pruning improved the score so we return the leaf with the majority.
-            return pruned_node, max(depth_left, depth_right)
+            # classification rate improved, replace pruned node with newly
+            # created leaf
+            return (new_leaf, max(depth_left, depth_right))
 
     # not a node with 2 leafs simply return here
-    return node, max(depth_left, depth_right)
+    return (node, max(depth_left, depth_right))
 
 def k_fold_split(dataset, k, index):
     test_size = int(len(dataset) / k)
@@ -125,10 +132,7 @@ def k_fold_split(dataset, k, index):
 
     return (training_data, test_data)
 
-# def confussion_matrix(labels_predictions):
-#   pass
-
 # evaluation(clean_dataset)
 evaluation(noisy_dataset)
-# (dt, depth) = decision_tree_learning(clean_dataset, 0)
+# (dt, depth) = decision_tree_learning(clean_dataset)
 # print(isEqual(dt, dt))

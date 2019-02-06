@@ -98,25 +98,44 @@ def split_data(dataset, attribute, value):
 
     return (left, right)
 
-
-def decision_tree_learning(dataset, depth):
+def decision_tree_learning(dataset, depth=0):
     label_col = len(dataset[0]) - 1
     same_class = np.all(dataset[0][label_col] == dataset[:,label_col])
 
     if same_class:
-        node = {"attribute": None, "value": dataset[0][label_col], "left": None, "right": None, "leaf": True}
+        # all data in dataset has the same classification, create a leaf node
+        # with this classification
+        node = {
+            "attribute": None,
+            "value": dataset[0][label_col],
+            "left": None,
+            "right": None,
+            "leaf": True
+        }
         return (node, depth)
     else:
-        # EVERY NODE WILL STORE THE MAJORTIY OF ITS CHILDREN FOR PRUNING
+        # every node will store the most popular classification in its children
+        # to be used in pruning
+
         result = find_split(dataset)
+
         if result == None:
-            # Could not find a split , will collapse this node into the most common class.
+            # could not find a split, collapse node into the most common class
             bin_count = np.bincount(dataset[:,label_col].astype(int))
-            mode_class = np.argmax(bin_count)
-            node = {"attribute": None, "value": mode_class, "left": None, "right": None, "leaf": True}
+            mode_class = float(np.argmax(bin_count))
+
+            node = {
+                "attribute": None,
+                "value": mode_class,
+                "left": None,
+                "right": None,
+                "leaf": True
+            }
             return (node, depth)
         else:
+            # a split is possible
             (value, attribute) = result
+
             # sort by col value
             sorted_dataset = dataset[dataset[:, attribute].argsort()]
 
@@ -124,11 +143,16 @@ def decision_tree_learning(dataset, depth):
             (left_branch, left_depth) = decision_tree_learning(left, depth + 1)
             (right_branch, right_depth) = decision_tree_learning(right, depth + 1)
 
-            # Here the node stores the majority class to be compared later on
             bin_count = np.bincount(dataset[:, label_col].astype(int))
-            mode_class = np.argmax(bin_count)
+            mode_class = float(np.argmax(bin_count))
 
-            node = {"attribute": attribute, "value": value, "left": left_branch, "right": right_branch, "leaf": False, "mode_class":mode_class}
+            node = {
+                "attribute": attribute,
+                "value": value,
+                "left": left_branch,
+                "right": right_branch,
+                "leaf": False,
+                "mode_class": mode_class
+            }
+
             return (node, max(left_depth, right_depth))
-
-# dt ,_ = decision_tree_learning(noisy_dataset, 0)
