@@ -104,17 +104,16 @@ def decision_tree_learning(dataset, depth):
     same_class = np.all(dataset[0][label_col] == dataset[:,label_col])
 
     if same_class:
-        node = {"attribute": None, "value": dataset[0][label_col], "left": None, "right": None, "leaf": True, "count": len(dataset)}
+        node = {"attribute": None, "value": dataset[0][label_col], "left": None, "right": None, "leaf": True}
         return (node, depth)
     else:
+        # EVERY NODE WILL STORE THE MAJORTIY OF ITS CHILDREN FOR PRUNING
         result = find_split(dataset)
         if result == None:
             # Could not find a split , will collapse this node into the majority.
             bin_count = np.bincount(dataset[:,label_col].astype(int))
-            value = np.argmax(bin_count)
-            count = bin_count[value]
-            node = {"attribute": None, "value": value, "left": None, "right": None, "leaf": True,
-                    "count": count}
+            majority = np.argmax(bin_count)
+            node = {"attribute": None, "value": majority, "left": None, "right": None, "leaf": True}
             return (node, depth)
         else:
             (value, attribute) = result
@@ -124,7 +123,12 @@ def decision_tree_learning(dataset, depth):
             (left, right) = split_data(sorted_dataset, attribute, value)
             (left_branch, left_depth) = decision_tree_learning(left, depth + 1)
             (right_branch, right_depth) = decision_tree_learning(right, depth + 1)
-            node = {"attribute": attribute, "value": value, "left": left_branch, "right": right_branch, "leaf": False, "count": 0}
+
+            # Here the node stores the majority class to be compared later on
+            bin_count = np.bincount(dataset[:, label_col].astype(int))
+            majority = np.argmax(bin_count)
+
+            node = {"attribute": attribute, "value": value, "left": left_branch, "right": right_branch, "leaf": False, "majority":majority}
             return (node, max(left_depth, right_depth))
 
-print(decision_tree_learning(noisy_dataset, 0))
+# dt ,_ = decision_tree_learning(noisy_dataset, 0)
