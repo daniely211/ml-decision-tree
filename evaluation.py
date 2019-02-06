@@ -93,7 +93,7 @@ def prune_tree(node, validation_data, parent=None, parent_side=None, root=None, 
 
 
         # replace the node to be the majority and see if the CR imporves
-        pruned_node = {"attribute": None, "value": node['majority'], "left": None, "right": None, "leaf": True}
+        pruned_node = {"attribute": None, "value": node['mode_class'], "left": None, "right": None, "leaf": True}
         parent[parent_side] = pruned_node
 
         # See if the prunning has increased the cr_before pruning
@@ -129,6 +129,6 @@ def k_fold_split(dataset, k, index):
 #   pass
 
 # evaluation(clean_dataset)
-# evaluation(noisy_dataset)
+evaluation(noisy_dataset)
 # (dt, depth) = decision_tree_learning(clean_dataset, 0)
 # print(isEqual(dt, dt))
