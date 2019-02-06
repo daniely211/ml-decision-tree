@@ -7,14 +7,12 @@ clean_dataset = np.loadtxt('wifi_db/clean_dataset.txt')
 noisy_dataset = np.loadtxt('wifi_db/noisy_dataset.txt')
 room_index = 7
 
-
 def get_cr(model, data):
     labels_predictions = [(prediction(model, row), row[room_index]) for row in data]
     cm = confusion_matrix(labels_predictions)
     return classification_rate(cm)
 
 def prediction(node, row):
-    
     if node['leaf']:
         return node['value']
 
@@ -26,39 +24,34 @@ def prediction(node, row):
 def evaluation(dataset):
     shuffle(dataset)
     k = 10
-    j = 9
     avg_difs = np.array([])
     avg_pruned = np.array([])
     avg_unpruned = np.array([])
     for test_i in range(k):
         # Split the data into training + validation, test
         (training_validation_data, test_data) = k_fold_split(dataset, k, test_i)
-    
+
         pruned_test_scores = np.array([]) # this is the average test score for all the pruned trees combined
         unpruned_test_scores = np.array([])
 
-        for validation_i in range(k):
+        for validation_i in range(k - 1):
             # Split the data into training, validation
-            (training_data, validation_data) = k_fold_split(training_validation_data, k, validation_i)
-            # Build the model with the training data
+            (training_data, validation_data) = k_fold_split(training_validation_data, k - 1, validation_i)
 
+            # Build the model with the training data
             (trained_model, _) = decision_tree_learning(training_data, 0)
 
             test_score_before = get_cr(trained_model, test_data)
             unpruned_test_scores = np.append(unpruned_test_scores, test_score_before)
-            # print ("Test score for the UNpruned tree: "+ str(test_score_before))
             cr_before_pruning = get_cr(trained_model, validation_data)
-
-            # print("Before Pruning: ")
 
             pruned_tree = prune_tree(trained_model, cr_before_pruning, validation_data)
             test_score = get_cr(pruned_tree, test_data)
 
-            # we get the validation error for the final pruned tree
-            # validation_error = 1 - test_score
+            # print("before: " + str(test_score_before))
+            # print("after: " + str(test_score))
+
             pruned_test_scores = np.append(pruned_test_scores, test_score)
-            # print("final test score for this prune tree: " + str(test_score))
-            # print("the difference between the scores :" + str(test_score - test_score_before))
 
         pruned_avg = np.mean(pruned_test_scores)
         unpruned_avg = np.mean(unpruned_test_scores)
@@ -111,26 +104,6 @@ def prune_tree(node, cr_before_pruning, validation_data, parent=None, parent_sid
     # not a node with 2 leafs simply return here
     return node
 
-    
-
-test_tree = {
-        'left': {
-            'left': { 'leaf': True },
-            'right': {
-                'left': { 'leaf': True, 'value': 1 },
-                'right': { 'leaf': True, 'value': 2 },
-                'leaf': False
-            },
-            'leaf': False
-        },
-        'right': {
-            'left': { 'leaf': True },
-            'right': { 'leaf': True },
-            'leaf': False
-        },
-        'leaf': False
-}
-
 def k_fold_split(dataset, k, index):
     test_size = int(len(dataset) / k)
     start_index = index * test_size
@@ -151,4 +124,3 @@ def k_fold_split(dataset, k, index):
 evaluation(noisy_dataset)
 # (dt, depth) = decision_tree_learning(clean_dataset, 0)
 # print(isEqual(dt, dt))
-
