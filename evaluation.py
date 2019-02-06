@@ -51,7 +51,7 @@ def evaluation(dataset):
 
             # print("Before Pruning: ")
 
-            pruned_tree = prune_tree(trained_model, cr_before_pruning, validation_data)
+            (pruned_tree, depth) = prune_tree(trained_model, validation_data)
             test_score = get_cr(pruned_tree, test_data)
 
             # we get the validation error for the final pruned tree
@@ -75,41 +75,47 @@ def evaluation(dataset):
     print("The Average differences across all 10 test folds ="+str(np.mean(avg_difs)))
     print("Happy Chinese New Year!")
 
-def prune_tree(node, cr_before_pruning, validation_data, parent=None, parent_side=None, root=None):
+def prune_tree(node, validation_data, parent=None, parent_side=None, root=None, depth=0):
     if root is None:
         root = node
 
     if node['leaf']:
-        return node
+        return (node, depth)
 
     # Our pruning algorithm does a depth first search and prune the left most node first then check the rest.
-    node['left'] = prune_tree(node['left'], cr_before_pruning, validation_data, node, 'left', root)
-    node['right'] = prune_tree(node['right'], cr_before_pruning, validation_data, node, 'right', root)
+    (node['left'], depth_left) = prune_tree(node['left'], validation_data, node, 'left', root, depth+1)
+    (node['right'], depth_right) = prune_tree(node['right'], validation_data, node, 'right', root, depth+1)
 
     if parent and node['left'] and node['left']['leaf'] and node['right'] and node['right']['leaf']:
-        # FIND THE MAJORITY OF LEFT AND RIGHT
-        majority_side = 'left'
-        if node['left']['count'] > node['right']['count']:
-            parent[parent_side] = node['left'] # This alters the root in place so we can test if the pruning worked
-        else:
-            parent[parent_side] = node['right'] # This alters the root in place
-            majority_side = 'right'
+        # Replace the courrent node to be the majority and then see if that improves the CR
+        cr_before_pruning = get_cr(root, validation_data)
+
+        # if node['left']['count'] > node['right']['count']:
+        #     parent[parent_side] = node['left'] # This alters the root in place so we can test if the pruning worked
+        # else:
+        #     parent[parent_side] = node['right'] # This alters the root in place
+        #     majority_side = 'right'
+
+
+        # replace the node to be the majority and see if the CR imporves
+        pruned_node = {"attribute": None, "value": node['majority'], "left": None, "right": None, "leaf": True}
+        parent[parent_side] = pruned_node
 
         # See if the prunning has increased the cr_before pruning
         cr_after_pruning = get_cr(root, validation_data)
-
         parent[parent_side] = node  # reset the parent node to the original
 
         if cr_after_pruning <= cr_before_pruning:
             # Prunning did not improve the CR
-            # print("NOT pruning !!!")
-            return node
+            return node, max(depth_left, depth_right)
         else:
+            # print("Before pruning:" + str(cr_before_pruning))
+            # print("After pruning:" + str(cr_after_pruning))
             # Pruning improved the score so we return the leaf with the majority.
-            return node[majority_side]
+            return pruned_node, max(depth_left, depth_right)
 
     # not a node with 2 leafs simply return here
-    return node
+    return node, max(depth_left, depth_right)
 
     
 
@@ -148,7 +154,7 @@ def k_fold_split(dataset, k, index):
 #   pass
 
 # evaluation(clean_dataset)
-evaluation(noisy_dataset)
+# evaluation(noisy_dataset)
 # (dt, depth) = decision_tree_learning(clean_dataset, 0)
 # print(isEqual(dt, dt))
 
