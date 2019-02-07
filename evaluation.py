@@ -60,13 +60,13 @@ def evaluation(dataset):
         unpruned_test_scores = np.array([])
 
         for validation_i in range(k - 1):
-            # split the data into training, validation
+            # Split the data into training, validation
             (training_data, validation_data) = k_fold_split(training_validation_data, k - 1, validation_i)
 
-            # build the model with the training data
+            # Build the model with the training data
             (trained_tree, depth_before) = decision_tree_learning(training_data)
 
-            # get classification rate on trained tree
+            # Get classification rate on trained tree
             test_score_before = get_cr(trained_tree, test_data)
             unpruned_test_scores = np.append(unpruned_test_scores, test_score_before)
 
@@ -74,37 +74,33 @@ def evaluation(dataset):
             new_cm_unpruned = get_confusion_matrix(trained_tree, test_data)
             avg_cm_unpruned = np.add(avg_cm_unpruned, new_cm_unpruned)
 
-            # Calculate per class the metrics and add into the array for UNPRUNED tree
+            # Prune the tree
+            (pruned_tree, depth_after) = prune_tree(trained_tree, validation_data)
+
+            # Get classification rate on pruned tree
+            test_score_after = get_cr(pruned_tree, test_data)
+            pruned_test_scores = np.append(pruned_test_scores, test_score_after)
+
+            # Calculate metrics
+            new_cm_pruned = get_confusion_matrix(pruned_tree, test_data)
+            avg_cm_pruned = np.add(avg_cm_pruned, new_cm_pruned)
+
             for classifcation in range(class_count):
+
+                # Calculate per class the metrics and add into the array for UNPRUNED tree
                 avg_precision[classifcation] = avg_precision[classifcation] + precision(new_cm_unpruned, classifcation)
                 avg_recall[classifcation] = avg_recall[classifcation] + recall(new_cm_unpruned, classifcation)
                 avg_f1[classifcation] = avg_f1[classifcation] + F1_measure(new_cm_unpruned, classifcation)
 
-
-            # prune the tree
-            (pruned_tree, depth_after) = prune_tree(trained_tree, validation_data)
-
-            # get classification rate on pruned tree
-            test_score_after = get_cr(pruned_tree, test_data)
-            pruned_test_scores = np.append(pruned_test_scores, test_score_after)
-
-            # calculate metrics
-            new_cm_pruned = get_confusion_matrix(pruned_tree, test_data)
-            avg_cm_pruned = np.add(avg_cm_pruned, new_cm_pruned)
-
-            # Calculate per class the metrics and add into the array for PRUNED tree
-            for classifcation in range(class_count):
+                # Calculate per class the metrics and add into the array for PRUNED tree
                 avg_precision_pruned[classifcation] = avg_precision_pruned[classifcation] + precision(new_cm_pruned, classifcation)
                 avg_recall_pruned[classifcation] = avg_recall_pruned[classifcation] + recall(new_cm_pruned, classifcation)
                 avg_f1_pruned[classifcation] = avg_f1_pruned[classifcation] + F1_measure(new_cm_pruned, classifcation)
-
+            print("------------------------------------------------------------")
 
         # Calculate the average metric for all k-1 of the trees
         # Divide by (k-1) for each of the metrics
         # Mean for unpruned
-        avg_precision = np.true_divide(avg_precision, (k - 1))
-        avg_recall = np.true_divide(avg_recall, (k - 1))
-        avg_f1 = np.true_divide(avg_f1, (k - 1))
 
         # Mean CR for unpruned and pruned
         unpruned_avg = np.mean(unpruned_test_scores)
@@ -119,12 +115,16 @@ def evaluation(dataset):
         print("Average unpruned test data cr: " + str(np.mean(unpruned_test_scores)))
         print("Average pruned test data cr: " + str(np.mean(pruned_test_scores)))
         print("Average difference between pruned and unpruned: " + str(avg_dif))
+
     avg_cm_unpruned = np.true_divide(avg_cm_unpruned, k * (k - 1))
     avg_cm_pruned = np.true_divide(avg_cm_pruned, k * (k - 1))
     # Mean for pruned
     avg_precision_pruned = np.true_divide(avg_precision_pruned, k * (k - 1))
     avg_recall_pruned = np.true_divide(avg_recall_pruned, k * (k - 1))
     avg_f1_pruned = np.true_divide(avg_f1_pruned, k * (k - 1))
+    avg_precision = np.true_divide(avg_precision, k * (k - 1))
+    avg_recall = np.true_divide(avg_recall, k * (k - 1))
+    avg_f1 = np.true_divide(avg_f1, k * (k - 1))
 
     print("************************ FINAL RESULT **********************")
     print("Average unpruned classification rate: " + str(np.mean(avg_unpruned)))
