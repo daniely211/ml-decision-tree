@@ -44,12 +44,13 @@ def evaluation(dataset):
 
     avg_cm_unpruned = np.zeros((4, 4), dtype=int)
     avg_cm_pruned = np.zeros((4, 4), dtype=int)
-    # Pruned array
+
+    # pruned array
     avg_precision_pruned = np.zeros(4)
     avg_recall_pruned = np.zeros(4)
     avg_f1_pruned = np.zeros(4)
 
-    # Unpruned array
+    # unpruned array
     avg_precision = np.zeros(4)
     avg_recall = np.zeros(4)
     avg_f1 = np.zeros(4)
@@ -57,7 +58,7 @@ def evaluation(dataset):
     for test_i in range(k):
         print("Test data is fold " + str(test_i) + " of dataset...")
         # split the data into training + validation, test
-        (training_validation_data, test_data) = k_fold_split(dataset, k, test_i)
+        (test_data, training_validation_data) = k_fold_split(dataset, k, test_i)
 
         pruned_test_scores = np.array([])
         unpruned_test_scores = np.array([])
@@ -66,7 +67,7 @@ def evaluation(dataset):
             index = validation_i + 1 if validation_i >= test_i else validation_i
             print("Validation is fold " + str(index) + " of data...")
             # Split the data into training, validation
-            (training_data, validation_data) = k_fold_split(training_validation_data, k - 1, validation_i)
+            (validation_data, training_data) = k_fold_split(training_validation_data, k - 1, validation_i)
 
             # Build the model with the training data
             (trained_tree, depth_before) = decision_tree_learning(training_data)
@@ -229,6 +230,8 @@ def prune_tree(node, validation_data, parent=None, parent_side=None, root=None, 
     # not a node with 2 leafs simply return here
     return (node, max(depth_left, depth_right))
 
+# splits the data into k folds of even size and selects the fold at the
+# specified index
 def k_fold_split(dataset, k, index):
     test_size = int(len(dataset) / k)
     start_index = index * test_size
@@ -236,11 +239,11 @@ def k_fold_split(dataset, k, index):
 
     data_before = np.array(dataset[0:start_index])
     data_after = np.array(dataset[end_index:len(dataset) - 1])
-    training_data = np.concatenate((data_before, data_after), axis=0)
+    rest = np.concatenate((data_before, data_after), axis=0)
 
-    test_data = np.array(dataset[start_index:end_index + 1])
+    fold = np.array(dataset[start_index:end_index + 1])
 
-    return (training_data, test_data)
+    return (fold, rest)
 
 evaluation(clean_dataset)
 # evaluation(noisy_dataset)
