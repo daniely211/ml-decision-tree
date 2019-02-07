@@ -3,6 +3,9 @@ from decision_tree import decision_tree_learning
 import numpy as np
 from confusion_matrix import confusion_matrix, recall, precision, classification_rate, F1_measure
 
+import matplotlib.pyplot as plt
+import itertools
+
 clean_dataset = np.loadtxt('wifi_db/clean_dataset.txt')
 noisy_dataset = np.loadtxt('wifi_db/noisy_dataset.txt')
 room_index = 7
@@ -52,7 +55,7 @@ def evaluation(dataset):
     avg_f1 = np.zeros(4)
 
     for test_i in range(k):
-        print("Splitting into training & validation fold and test fold...")
+        print("Test data is fold " + str(test_i) + " of dataset...")
         # split the data into training + validation, test
         (training_validation_data, test_data) = k_fold_split(dataset, k, test_i)
 
@@ -60,6 +63,8 @@ def evaluation(dataset):
         unpruned_test_scores = np.array([])
 
         for validation_i in range(k - 1):
+            index = validation_i + 1 if validation_i >= test_i else validation_i
+            print("Validation is fold " + str(index) + " of data...")
             # Split the data into training, validation
             (training_data, validation_data) = k_fold_split(training_validation_data, k - 1, validation_i)
 
@@ -96,6 +101,8 @@ def evaluation(dataset):
                 avg_precision_pruned[classifcation] = avg_precision_pruned[classifcation] + precision(new_cm_pruned, classifcation)
                 avg_recall_pruned[classifcation] = avg_recall_pruned[classifcation] + recall(new_cm_pruned, classifcation)
                 avg_f1_pruned[classifcation] = avg_f1_pruned[classifcation] + F1_measure(new_cm_pruned, classifcation)
+
+            print("Data collected")
             print("------------------------------------------------------------")
 
         # Calculate the average metric for all k-1 of the trees
@@ -115,6 +122,7 @@ def evaluation(dataset):
         print("Average unpruned test data cr: " + str(np.mean(unpruned_test_scores)))
         print("Average pruned test data cr: " + str(np.mean(pruned_test_scores)))
         print("Average difference between pruned and unpruned: " + str(avg_dif))
+        print()
 
     avg_cm_unpruned = np.true_divide(avg_cm_unpruned, k * (k - 1))
     avg_cm_pruned = np.true_divide(avg_cm_pruned, k * (k - 1))
@@ -147,6 +155,34 @@ def evaluation(dataset):
     print("------------------------------------------------------------")
     print("Average pruned confusion matrix:")
     print(avg_cm_pruned)
+
+    classes = [
+        "Room 1",
+        "Room 2",
+        "Room 3",
+        "Room 4"
+    ]
+
+    plot_confusion_matrix(avg_cm_unpruned, classes, "Unpruned / Clean Data")
+    plot_confusion_matrix(avg_cm_pruned, classes, "Pruned / Clean Data")
+
+def plot_confusion_matrix(cm, classes, title='Confusion Matrix', cmap=plt.cm.Blues):
+    plt.imshow(cm, interpolation='nearest', cmap=cmap)
+    plt.title(title)
+    plt.colorbar()
+    tick_marks = np.arange(len(classes))
+    plt.xticks(tick_marks, classes, rotation=45)
+    plt.yticks(tick_marks, classes)
+
+    thresh = cm.max() / 2.
+    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+        plt.text(j, i, format(cm[i, j], '.2f'),
+                 horizontalalignment="center",
+                 color="white" if cm[i, j] > thresh else "black")
+    plt.ylabel('True label')
+    plt.xlabel('Predicted label')
+    plt.tight_layout()
+    plt.show()
 
 
 def prune_tree(node, validation_data, parent=None, parent_side=None, root=None, depth=0):
@@ -206,5 +242,5 @@ def k_fold_split(dataset, k, index):
 
     return (training_data, test_data)
 
-# evaluation(clean_dataset)
-evaluation(noisy_dataset)
+evaluation(clean_dataset)
+# evaluation(noisy_dataset)

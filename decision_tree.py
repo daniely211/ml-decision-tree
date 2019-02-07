@@ -5,31 +5,30 @@ np.set_printoptions(threshold=float('inf'))
 clean_dataset = np.loadtxt('wifi_db/clean_dataset.txt')
 noisy_dataset = np.loadtxt('wifi_db/noisy_dataset.txt')
 
-# Find the best split to perform
+# find the best split to perform
 def find_split(dataset):
     max_gain = float('-inf')
     split_point_attr = None
-
     class_index = len(dataset[0]) - 1
 
     dataset.astype(float)
 
-    # find gain for each attribute
+    # iterate over each attribute and find a split point with the largest gain
     for i in range(len(dataset[0]) - 1):
         # sort whole dataset by current attribute (i)
         sorted_dataset = dataset[dataset[:,i].argsort()]
 
+        # find all possible split points
         split_points = find_split_points(sorted_dataset, i)
+
+        # return the split point with the best gain
         (gain, split_point) = find_best_gain(split_points, sorted_dataset, i)
 
         if gain > max_gain:
             max_gain = gain
             split_point_attr = (split_point, i)
 
-    # if split_point_attr == None:
-    #     print("didnt find a split in all the column")
     return split_point_attr
-
 
 # Find all possible split points for the given column
 def find_split_points(sorted_dataset, attribute):
