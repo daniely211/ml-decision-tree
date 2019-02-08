@@ -3,96 +3,95 @@ import decision_tree
 import numpy as np
 from evaluation import prune_tree, k_fold_split
 
-decision_node = dict(boxstyle="round4",fc="w", color ='dodgerblue')
-leaf_node = dict(boxstyle="round4",fc="w", color='dodgerblue')
-arrow_args = dict(arrowstyle="-",color='gold', connectionstyle="arc3")
+class PlotTree:
 
-def plot_node(nodeText,centerPt,parentPt,nodeType):
-    create_plot.ax1.annotate(nodeText, xy=parentPt, xycoords='axes fraction', xytext=centerPt, textcoords='axes fraction',
-                           va='bottom', ha='center', bbox=nodeType, arrowprops=arrow_args)
-
-
-def get_num_leaves(tree):
-    '''
-    Get the number of leaf nodes
-    As a node, if it contains a dictionary set, this node is a leaf node
-    So we need to search its left child and right child until we find a leaf node
-    '''
-    num_leaf_nodes = 0
-    key_list = list(tree.keys())
-    condition = key_list[0]       # split condition
-    content = tree[condition]     # content of the node
-    keys = ['left', 'right']
-
-    for key in keys:
-        if type(content[key]).__name__ == 'dict':
-            num_leaf_nodes += get_num_leaves(content[key])
-        else: num_leaf_nodes += 1
-
-    return num_leaf_nodes
-
-def plot_tree(tree, parentPt, nodeTxt, depth):
-    '''
-    Ploting the tree depends on the depth of the tree
-    and the number of leaf nodes
-    '''
-    num_leaf_nodes = get_num_leaves(tree)
-    condition = list(tree.keys())
-    content = condition[0]
-    # Plot the tree in the center
-    centrePt = (plot_tree.xOff + (1.0 + float(num_leaf_nodes))/2.0/plot_tree.totalW, plot_tree.yOff)
-    plot_node(content, centrePt, parentPt, decision_node)
-    child_node = tree[content]
-    plot_tree.yOff = plot_tree.yOff - 1.0/plot_tree.totalD
-
-    keys = ['left', 'right']
-
-    for key in keys:
-        #TODO CHANGE THIS
-        if type(child_node[key]).__name__=='bool':
-            continue
-
-        if type(child_node[key]).__name__=='dict':
-            # if it is not a leaf node
-            plot_tree(child_node[key], centrePt, str(key), depth)
-        else:
-            # a leaf node
-            plot_tree.xOff = plot_tree.xOff + 1.0 / plot_tree.totalW
-            plot_node(child_node[key], (plot_tree.xOff, plot_tree.yOff), centrePt, leaf_node)
-
-    plot_tree.yOff = plot_tree.yOff + 1.0/plot_tree.totalD
+    def __init__(self, tree, depth):
+        self.axes = plt.subplot(111, frameon=False, **dict(xticks=[],yticks=[]))
+        self.depth = float(depth)
+        self.width = self.get_width(tree)
+        self.x_margin = -1.0/self.width
+        self.y_margin = 1.0
 
 
-def create_plot(tree, depth):
-    fig = plt.figure(1,facecolor='white')
-    fig.clf()
-    axprops = dict(xticks=[],yticks=[])
-    create_plot.ax1 = plt.subplot(111,frameon=False,**axprops)
-    plot_tree.totalW = float(get_num_leaves(tree))
-    plot_tree.totalD = float(depth)
-    plot_tree.xOff = -0.5/plot_tree.totalW
-    plot_tree.yOff = 1.0
-    plot_tree(tree,(0.5,1.0),'', depth)
-    plt.show()
+    def plot_node(self, text, loc, parent, node_type):
+        args = dict(arrowstyle = "-", color = 'gold', connectionstyle = "arc3")
+        self.axes.annotate(text, xy = parent, xycoords = 'axes fraction', xytext = loc, textcoords = 'axes fraction',
+                           va = 'bottom', ha = 'center', bbox = node_type, arrowprops = args)
+
+
+    def get_width(self, tree):
+        '''
+        Get the number of leaf nodes
+        As a node, if it contains a dictionary set, this node is a leaf node
+        So we need to search its left child and right child until we find a leaf node
+        '''
+        num_leaf_nodes = 0
+
+        root_decision = list(tree.keys())[0]
+        node = tree[root_decision]
+
+        for key in ['left', 'right']:
+            try:
+                num_leaf_nodes += self.get_width(node[key])
+            except:
+                num_leaf_nodes += 1
+
+        return num_leaf_nodes
+
+
+    def plot(self, tree, parent, text):
+        '''
+        Ploting the tree depends on the depth of the tree
+        and the number of leaf nodes
+        '''
+        num_leaf_nodes = self.get_width(tree)
+
+        root_decision = list(tree.keys())[0]
+        node = tree[root_decision]
+
+        # Plot the tree in the center
+        x_replacement = (1.0 + float(num_leaf_nodes)) / 2.0 / self.width
+        centrePt = (self.x_margin + x_replacement , self.y_margin)
+        decision_node = dict(boxstyle = "round4", fc = "w", color = 'dodgerblue')
+        self.plot_node(root_decision, centrePt, parent, decision_node)
+
+        self.y_margin -= 1.0/self.depth
+
+        for key in ['left', 'right']:
+            try:
+                # if it is not a leaf node
+                self.plot(node[key], centrePt, str(key))
+            except:
+                # a leaf node
+                self.x_margin += 1.0 / self.width
+                leaf_node = dict(boxstyle = "round4", fc = "w", color = 'dodgerblue')
+                self.plot_node(node[key], (self.x_margin, self.y_margin), centrePt, leaf_node)
+
+        self.y_margin += 1.0/self.depth
+
 
 def retrieve_tree(tree):
     if not tree:
         return None
 
-    left = merge_keys(tree.get('left'))
-    right = merge_keys(tree.get('right'))
-    tree['left'] = left;
-    tree['right'] = right;
+    left = merge_keys(tree['left'])
+    right = merge_keys(tree['right'])
+    tree['left'] = left
+    tree['right'] = right
     if type(left).__name__ == 'dict':
         retrieve_tree(list(left.values())[0])
     if type(right).__name__ == 'dict':
         retrieve_tree(list(right.values())[0])
+
     return tree
+
 
 def merge_keys(tree):
     '''
     Merge the keys 'attribute' and 'value' into a new key 'condition'
-    For example: {’x3 < -55’: {’left’:{ left_child }, ’right’:{ right_child }}}
+    For example:
+    if a parent node {’x3 < -55’: {'attribute': ..., 'value': ..., ’left’:{ left_child }, ’right’:{ right_child }}}
+    else a leaf node 'leaf: ...'
     '''
     new = {}
 
@@ -103,20 +102,19 @@ def merge_keys(tree):
         new[condition] = tree
         return new
 
-clean_dataset = np.loadtxt('wifi_db/clean_dataset.txt')
-noisy_dataset = np.loadtxt('wifi_db/noisy_dataset.txt')
 
-# (dt, depth) = decision_tree.decision_tree_learning(clean_dataset, 0)
-# decisionTree = merge_keys(retrieve_tree(dt))
-# print(decisionTree)
-# (training_data, test_data) = k_fold_split(clean_dataset, 10, 3)
-(training_data, test_data) = k_fold_split(noisy_dataset, 10, 3)
-(dt_unpruned, depth_1) = decision_tree.decision_tree_learning(training_data, 0)
-# (pruned_tree, depth_2) = prune_tree(dt_unpruned, test_data)
+def main():
+    clean_dataset = np.loadtxt('wifi_db/clean_dataset.txt')
+    noisy_dataset = np.loadtxt('wifi_db/noisy_dataset.txt')
 
-dt_unpruned_plot = merge_keys(retrieve_tree(dt_unpruned))
+    (dt, depth_1) = decision_tree.decision_tree_learning(clean_dataset, 0)
+    dt_plot = merge_keys(retrieve_tree(dt))
+    pt = PlotTree(dt_plot, depth_1)
+    pt.plot(dt_plot, (0.5, 1.0), '')
 
-# pruned_tree_plot = merge_keys(retrieve_tree(pruned_tree))
+    plt.show()
 
-create_plot(dt_unpruned_plot, depth_1)
-# create_plot(pruned_tree_plot, depth_2)
+
+
+if __name__ == "__main__":
+    main()
