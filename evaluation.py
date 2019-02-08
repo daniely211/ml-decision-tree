@@ -6,8 +6,6 @@ from confusion_matrix import confusion_matrix, recall, precision, classification
 import matplotlib.pyplot as plt
 import itertools
 
-clean_dataset = np.loadtxt('wifi_db/clean_dataset.txt')
-noisy_dataset = np.loadtxt('wifi_db/noisy_dataset.txt')
 room_index = 7
 class_count = 4
 
@@ -33,7 +31,8 @@ def prediction(node, row):
     else:
         return prediction(node['right'], row)
 
-def evaluation(dataset):
+def evaluation(path):
+    dataset = np.loadtxt(path)
     print("Shuffling dataset...")
     shuffle(dataset)
 
@@ -270,5 +269,5 @@ def k_fold_split(dataset, k, index):
 
     return (fold, rest)
 
-# evaluation(clean_dataset)
-evaluation(noisy_dataset)
+evaluation('wifi_db/clean_dataset.txt')
+# evaluation('wifi_db/noisy_dataset.txt')
