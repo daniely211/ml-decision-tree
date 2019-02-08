@@ -55,6 +55,15 @@ def evaluation(dataset):
     avg_recall = np.zeros(4)
     avg_f1 = np.zeros(4)
 
+    # Depth of the tree
+    max_depth = -1
+    max_depth_cr = 0
+
+    max_depth_pruned = -1
+    max_depth_pruned_cr = 0
+
+
+
     for test_i in range(k):
         print("Test data is fold " + str(test_i) + " of dataset...")
         # split the data into training + validation, test
@@ -72,9 +81,14 @@ def evaluation(dataset):
             # Build the model with the training data
             (trained_tree, depth_before) = decision_tree_learning(training_data)
 
+
             # Get classification rate on trained tree
             test_score_before = get_cr(trained_tree, test_data)
             unpruned_test_scores = np.append(unpruned_test_scores, test_score_before)
+
+            if max_depth < depth_before:
+                max_depth = depth_before
+                max_depth_cr = test_score_before
 
             # Calculate the confusion matrix for unpruned tree
             new_cm_unpruned = get_confusion_matrix(trained_tree, test_data)
@@ -86,6 +100,10 @@ def evaluation(dataset):
             # Get classification rate on pruned tree
             test_score_after = get_cr(pruned_tree, test_data)
             pruned_test_scores = np.append(pruned_test_scores, test_score_after)
+
+            if max_depth_pruned < depth_after:
+                max_depth_pruned = depth_after
+                max_depth_pruned_cr = test_score_after
 
             # Calculate metrics
             new_cm_pruned = get_confusion_matrix(pruned_tree, test_data)
@@ -157,15 +175,22 @@ def evaluation(dataset):
     print("Average pruned confusion matrix:")
     print(avg_cm_pruned)
 
-    classes = [
-        "Room 1",
-        "Room 2",
-        "Room 3",
-        "Room 4"
-    ]
+    print("Max depth for pruned:" + str(max_depth_pruned))
+    print("Max depth for unpruned:" + str(max_depth))
+    print("Max depth for pruned cr:" + str(max_depth_pruned_cr))
+    print("Max depth for unpruned cr :" + str(max_depth_cr))
 
-    plot_confusion_matrix(avg_cm_unpruned, classes, "Unpruned / Clean Data")
-    plot_confusion_matrix(avg_cm_pruned, classes, "Pruned / Clean Data")
+    # classes = [
+    #     "Room 1",
+    #     "Room 2",
+    #     "Room 3",
+    #     "Room 4"
+    # ]
+
+    # plot_confusion_matrix(avg_cm_unpruned, classes, "Unpruned / Clean Data")
+    # plot_confusion_matrix(avg_cm_pruned, classes, "Pruned / Clean Data")
+
+
 
 def plot_confusion_matrix(cm, classes, title='Confusion Matrix', cmap=plt.cm.Blues):
     plt.imshow(cm, interpolation='nearest', cmap=cmap)
@@ -245,5 +270,5 @@ def k_fold_split(dataset, k, index):
 
     return (fold, rest)
 
-evaluation(clean_dataset)
-# evaluation(noisy_dataset)
+# evaluation(clean_dataset)
+evaluation(noisy_dataset)
