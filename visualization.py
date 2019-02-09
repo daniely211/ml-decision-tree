@@ -2,6 +2,8 @@ import matplotlib.pyplot as plt
 import decision_tree
 import numpy as np
 from evaluation import prune_tree, k_fold_split
+from numpy.random import shuffle
+
 
 class PlotTree:
 
@@ -9,11 +11,14 @@ class PlotTree:
         self.axes = plt.subplot(111, frameon=False, **dict(xticks=[],yticks=[]))
         self.depth = float(depth)
         self.width = self.get_width(tree)
-        self.x_margin = -1.0/self.width
-        self.y_margin = 1.0
+        self.x_loc = -1.0/self.width
+        self.y_loc = 1.0
 
 
     def plot_node(self, text, loc, parent, node_type):
+        '''
+        define the type and color of annotations and node
+        '''
         args = dict(arrowstyle = "-", color = 'gold', connectionstyle = "arc3")
         self.axes.annotate(text, xy = parent, xycoords = 'axes fraction', xytext = loc, textcoords = 'axes fraction',
                            va = 'bottom', ha = 'center', bbox = node_type, arrowprops = args)
@@ -51,11 +56,11 @@ class PlotTree:
 
         # Plot the tree in the center
         x_replacement = (1.0 + float(num_leaf_nodes)) / 2.0 / self.width
-        centrePt = (self.x_margin + x_replacement , self.y_margin)
+        centrePt = (self.x_loc + x_replacement , self.y_loc)
         decision_node = dict(boxstyle = "round4", fc = "w", color = 'dodgerblue')
         self.plot_node(root_decision, centrePt, parent, decision_node)
 
-        self.y_margin -= 1.0/self.depth
+        self.y_loc -= 1.0/self.depth
 
         for key in ['left', 'right']:
             try:
@@ -63,25 +68,25 @@ class PlotTree:
                 self.plot(node[key], centrePt, str(key))
             except:
                 # a leaf node
-                self.x_margin += 1.0 / self.width
-                leaf_node = dict(boxstyle = "round4", fc = "w", color = 'dodgerblue')
-                self.plot_node(node[key], (self.x_margin, self.y_margin), centrePt, leaf_node)
+                self.x_loc += 1.0 / self.width
+                leaf_node = dict(boxstyle = "round4", fc = "w", color = 'green')
+                self.plot_node(node[key], (self.x_loc, self.y_loc), centrePt, leaf_node)
 
-        self.y_margin += 1.0/self.depth
+        self.y_loc += 1.0/self.depth
 
 
 def retrieve_tree(tree):
+    '''
+    Get the left child and right child of the decision node
+    '''
     if not tree:
         return None
 
-    left = merge_keys(tree['left'])
-    right = merge_keys(tree['right'])
-    tree['left'] = left
-    tree['right'] = right
-    if type(left).__name__ == 'dict':
-        retrieve_tree(list(left.values())[0])
-    if type(right).__name__ == 'dict':
-        retrieve_tree(list(right.values())[0])
+    for key in ['left', 'right']:
+        child = merge_keys(tree[key])
+        tree[key] = child
+        if type(child).__name__ == 'dict':
+            retrieve_tree(list(child.values())[0])
 
     return tree
 
@@ -104,16 +109,73 @@ def merge_keys(tree):
 
 
 def main():
+    # upload clean and noisy dataset
     clean_dataset = np.loadtxt('wifi_db/clean_dataset.txt')
     noisy_dataset = np.loadtxt('wifi_db/noisy_dataset.txt')
+    shuffle(clean_dataset)
+    shuffle(noisy_dataset)
 
-    (dt, depth_1) = decision_tree.decision_tree_learning(clean_dataset, 0)
-    dt_plot = merge_keys(retrieve_tree(dt))
-    pt = PlotTree(dt_plot, depth_1)
-    pt.plot(dt_plot, (0.5, 1.0), '')
 
+    # plot initial tree with clean dataset
+    (dt_clean, depth_1o) = decision_tree.decision_tree_learning(clean_dataset, 0)
+    dt_plot_clean = merge_keys(retrieve_tree(dt_clean))
+    pt_clean = PlotTree(dt_plot_clean, depth_1o)
+    pt_clean.plot(dt_plot_clean, (0.5, 1.0), '')
+    # plt.title("Initial tree with clean dataset")
     plt.show()
 
+    # plot unpruned tree with clean dataset
+    plt.figure()
+    (clean_split_test, clean_split_train) = k_fold_split(clean_dataset, 10, 3)
+    (dt_unpruned_clean, depth_1u) = decision_tree.decision_tree_learning(clean_split_train, 0)
+    dt_plot_clean_unpruned = merge_keys(retrieve_tree(dt_unpruned_clean))
+    pt_pruned_clean = PlotTree(dt_plot_clean_unpruned, depth_1u)
+    pt_pruned_clean.plot(dt_plot_clean_unpruned, (0.5, 1.0), '')
+    # plt.title("Unpruned tree with clean dataset")
+    plt.show()
+
+
+    # plot pruned tree with clean dataset
+    plt.figure()
+    (clean_split_test, clean_split_train) = k_fold_split(clean_dataset, 10, 3)
+    (dt_unpruned_clean, depth_11u) = decision_tree.decision_tree_learning(clean_split_train, 0)
+    (dt_pruned_clean, depth_11p) = prune_tree(dt_unpruned_clean, clean_split_test)
+    dt_plot_clean_pruned = merge_keys(retrieve_tree(dt_pruned_clean))
+    pt_pruned_clean = PlotTree(dt_plot_clean_pruned, depth_11p)
+    pt_pruned_clean.plot(dt_plot_clean_pruned, (0.5, 1.0), '')
+    # plt.title("Pruned tree with clean dataset")
+    plt.show()
+
+
+    # plot initial tree with noisy dataset
+    plt.figure()
+    (dt_noisy, depth_2o) = decision_tree.decision_tree_learning(noisy_dataset, 0)
+    dt_plot_noisy = merge_keys(retrieve_tree(dt_noisy))
+    pt_noisy = PlotTree(dt_plot_noisy, depth_2o)
+    pt_noisy.plot(dt_plot_noisy, (0.5, 1.0), '')
+    # plt.title("Initial tree with noisy dataset")
+    plt.show()
+
+    # plot unpruned tree with noisy dataset
+    plt.figure()
+    (noisy_split_test, noisy_split_train) = k_fold_split(noisy_dataset, 10, 3)
+    (dt_unpruned_noisy, depth_2u) = decision_tree.decision_tree_learning(noisy_split_train, 0)
+    dt_plot_noisy_unpruned = merge_keys(retrieve_tree(dt_unpruned_noisy))
+    pt_pruned_noisy = PlotTree(dt_plot_noisy_unpruned, depth_2u)
+    pt_pruned_noisy.plot(dt_plot_noisy_unpruned, (0.5, 1.0), '')
+    # plt.title("Unpruned tree with noisy dataset")
+    plt.show()
+
+    # plot pruned tree with clean dataset
+    plt.figure()
+    (noisy_split_test, noisy_split_train) = k_fold_split(noisy_dataset, 10, 3)
+    (dt_unpruned_noisy, depth_22u) = decision_tree.decision_tree_learning(noisy_split_train, 0)
+    (dt_pruned_noisy, depth_22p) = prune_tree(dt_unpruned_noisy, noisy_split_test)
+    dt_plot_noisy_pruned = merge_keys(retrieve_tree(dt_pruned_noisy))
+    pt_pruned_noisy = PlotTree(dt_plot_noisy_pruned, depth_22p)
+    pt_pruned_noisy.plot(dt_plot_noisy_pruned, (0.5, 1.0), '')
+    # plt.title("Pruned tree with noisy dataset")
+    plt.show()
 
 
 if __name__ == "__main__":
