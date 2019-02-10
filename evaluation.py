@@ -9,10 +9,18 @@ import itertools
 room_index = 7
 class_count = 4
 
+# Calculates the confusion matrix for a tree and some data
+#
+#   tree    the decision tree
+#   data    the ground-truth data to test the tree
 def get_confusion_matrix(tree, data):
     labels_predictions = [(prediction(tree, row), row[room_index]) for row in data]
     return confusion_matrix(labels_predictions)
 
+# Get the average classification rate of the decision tree
+#
+#   tree    the decision tree
+#   data    the ground-truth data
 def get_cr(tree, data):
     cm = get_confusion_matrix(tree, data)
     cr = 0
@@ -22,6 +30,10 @@ def get_cr(tree, data):
 
     return cr / 4
 
+# Get the prediction of a classification from a decision tree
+#
+#   node    a node in the decision tree
+#   row     a row of data from the data set to be classified
 def prediction(node, row):
     if node['leaf']:
         return node['value']
@@ -31,6 +43,9 @@ def prediction(node, row):
     else:
         return prediction(node['right'], row)
 
+# Evaluate the results of a given dataset using k-fold cross validation
+#
+#   path    the path to the dataset
 def evaluation(path):
     dataset = np.loadtxt(path)
     print("Shuffling dataset...")
@@ -60,8 +75,6 @@ def evaluation(path):
 
     max_depth_pruned = -1
     max_depth_pruned_cr = 0
-
-
 
     for test_i in range(k):
         print("Test data is fold " + str(test_i) + " of dataset...")
@@ -209,7 +222,14 @@ def plot_confusion_matrix(cm, classes, title='Confusion Matrix', cmap=plt.cm.Blu
     plt.tight_layout()
     plt.show()
 
-
+# Prune the given decision tree
+#
+#   node            node in the decision tree, on first call this will be the root node
+#   validation_data the validation data from the dataset
+#   parent          the parent of 'node', None on initial call
+#   parent_side     which side of 'parent' the current 'node' is [left|right]
+#   root            the root of the decision tree
+#   depth           the current depth of the tree
 def prune_tree(node, validation_data, parent=None, parent_side=None, root=None, depth=0):
     if root is None:
         root = node
@@ -254,8 +274,12 @@ def prune_tree(node, validation_data, parent=None, parent_side=None, root=None, 
     # not a node with 2 leafs simply return here
     return (node, max(depth_left, depth_right))
 
-# splits the data into k folds of even size and selects the fold at the
+# Splits the data into k folds of even size and selects the fold at the
 # specified index
+#
+#   dataset     the data to be split
+#   k           the number of folds
+#   index       the index of the fold desired
 def k_fold_split(dataset, k, index):
     test_size = int(len(dataset) / k)
     start_index = index * test_size
