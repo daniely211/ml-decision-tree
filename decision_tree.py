@@ -5,7 +5,9 @@ np.set_printoptions(threshold=float('inf'))
 clean_dataset = np.loadtxt('wifi_db/clean_dataset.txt')
 noisy_dataset = np.loadtxt('wifi_db/noisy_dataset.txt')
 
-# find the best split to perform
+# Find the best split to perform
+#
+#   dataset     the dataset to find the best split point on
 def find_split(dataset):
     max_gain = float('-inf')
     split_point_attr = None
@@ -30,7 +32,11 @@ def find_split(dataset):
 
     return split_point_attr
 
-# Find all possible split points for the given column
+# Find all possible split points for the given attribute
+#
+#   sorted_dataset      the dataset, sorted on the given attribute in ascending
+#                       order
+#   attribute           the attribute to find the split points on
 def find_split_points(sorted_dataset, attribute):
     split_points = np.array([])
 
@@ -49,6 +55,11 @@ def find_split_points(sorted_dataset, attribute):
     return split_points
 
 # Finds the largest gain given some split points and a sorted column
+#
+#   split_points    array of all possible split points
+#   sorted_dataset  the dataset, sorted on the given attribute in ascending
+#                   order
+#   attribute       the attribute which will be split
 def find_best_gain(split_points, sorted_dataset, attribute):
     max_gain = float('-inf')
     gain_point = (float('-inf'), None)
@@ -64,6 +75,8 @@ def find_best_gain(split_points, sorted_dataset, attribute):
     return gain_point
 
 # Calculate entropy of the dataset
+#
+#   dataset     the dataset to calculate entropy for
 def entropy(dataset):
     class_index = len(dataset[0]) - 1
     classes = dataset[:,class_index]
@@ -81,6 +94,10 @@ def entropy(dataset):
 
     return H
 
+# Calculate the entropy of the left/right split
+#
+#   left    the left split
+#   right   the right split
 def remainder(left, right):
     num_left = left.shape[0]
     num_right = right.shape[0]
@@ -88,15 +105,42 @@ def remainder(left, right):
 
     return (num_left / all) * entropy(left) + (num_right / all) * entropy(right)
 
+# Calculates the information gain of a split
+#
+#   all     full dataset before split
+#   left    left split
+#   rigth   right split
 def gain(all, left, right):
     return entropy(all) - remainder(left, right)
 
+# Split the given dataset by the value of a certain attribute, anything below
+# the value goes to the left fold, anything above goes to the right fold.
+#
+# NOTE: this function assumes 'dataset' is sorted in ascending order on the
+# given 'attribute'
+#
+#   dataset     the dataset to be split
+#   attribute   the attribute to split on
+#   value       the value to split on
 def split_data(dataset, attribute, value):
     left = dataset[dataset[:,attribute] < value]
     right = dataset[dataset[:,attribute] > value]
 
     return (left, right)
 
+# Return the most common classification for a given dataset
+#
+#   dataset     the dataset of classificatons
+#   label_col   the column which contains the classifications
+def find_most_common_class(dataset, label_col):
+    bin_count = np.bincount(dataset[:,label_col].astype(int))
+    return float(np.argmax(bin_count))
+
+# Recursively builds a decision tree from a given dataset
+#
+#   dataset     the dataset to use to build the tree
+#   depth       the depth of the tree, defaults to 0, will be incremented on
+#               recursive calls
 def decision_tree_learning(dataset, depth=0):
     label_col = len(dataset[0]) - 1
     same_class = np.all(dataset[0][label_col] == dataset[:,label_col])
@@ -120,8 +164,7 @@ def decision_tree_learning(dataset, depth=0):
 
         if result == None:
             # could not find a split, collapse node into the most common class
-            bin_count = np.bincount(dataset[:,label_col].astype(int))
-            mode_class = float(np.argmax(bin_count))
+            mode_class = find_most_common_class(dataset, label_col)
 
             node = {
                 "attribute": None,
@@ -139,11 +182,12 @@ def decision_tree_learning(dataset, depth=0):
             sorted_dataset = dataset[dataset[:, attribute].argsort()]
 
             (left, right) = split_data(sorted_dataset, attribute, value)
+
+            # recursively call on left and right splits
             (left_branch, left_depth) = decision_tree_learning(left, depth + 1)
             (right_branch, right_depth) = decision_tree_learning(right, depth + 1)
 
-            bin_count = np.bincount(dataset[:, label_col].astype(int))
-            mode_class = float(np.argmax(bin_count))
+            mode_class = find_most_common_class(dataset, label_col)
 
             node = {
                 "attribute": attribute,
