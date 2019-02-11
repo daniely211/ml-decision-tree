@@ -19,13 +19,13 @@ python3 evaluation.py wifi_db/noisy_dataset.txt
 To run the visualisation code in the terminal type:
 
 ```
-python3 visualisation.py [data]
+python3 visualization.py [data]
 ```
 
 where `[data]` is the path to the data to be evaluated, e.g.:
 
 ```
-python3 visualisation.py wifi_db/noisy_dataset.txt
+python3 visualization.py wifi_db/noisy_dataset.txt
 ```
 
 This will plot a pruned and unpruned tree for the given data set.
