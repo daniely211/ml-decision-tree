@@ -1,10 +1,10 @@
-from numpy.random import shuffle
-from decision_tree import decision_tree_learning
 import numpy as np
-from confusion_matrix import confusion_matrix, recall, precision, classification_rate, F1_measure
-
+import sys
 import matplotlib.pyplot as plt
 import itertools
+from numpy.random import shuffle
+from decision_tree import decision_tree_learning
+from confusion_matrix import confusion_matrix, recall, precision, classification_rate, F1_measure
 
 room_index = 7
 class_count = 4
@@ -192,36 +192,6 @@ def evaluation(path):
     print("Max depth for pruned cr:" + str(max_depth_pruned_cr))
     print("Max depth for unpruned cr :" + str(max_depth_cr))
 
-    # classes = [
-    #     "Room 1",
-    #     "Room 2",
-    #     "Room 3",
-    #     "Room 4"
-    # ]
-
-    # plot_confusion_matrix(avg_cm_unpruned, classes, "Unpruned / Clean Data")
-    # plot_confusion_matrix(avg_cm_pruned, classes, "Pruned / Clean Data")
-
-
-
-def plot_confusion_matrix(cm, classes, title='Confusion Matrix', cmap=plt.cm.Blues):
-    plt.imshow(cm, interpolation='nearest', cmap=cmap)
-    plt.title(title)
-    plt.colorbar()
-    tick_marks = np.arange(len(classes))
-    plt.xticks(tick_marks, classes, rotation=45)
-    plt.yticks(tick_marks, classes)
-
-    thresh = cm.max() / 2.
-    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
-        plt.text(j, i, format(cm[i, j], '.2f'),
-                 horizontalalignment="center",
-                 color="white" if cm[i, j] > thresh else "black")
-    plt.ylabel('True label')
-    plt.xlabel('Predicted label')
-    plt.tight_layout()
-    plt.show()
-
 # Prune the given decision tree
 #
 #   node            node in the decision tree, on first call this will be the root node
@@ -293,5 +263,12 @@ def k_fold_split(dataset, k, index):
 
     return (fold, rest)
 
-evaluation('wifi_db/clean_dataset.txt')
-# evaluation('wifi_db/noisy_dataset.txt')
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("Error: please pass the data set to be evaluated as an argument e.g.:")
+        print()
+        print("$  python3 evaluation.py wifi_db/noisy_dataset.txt")
+        print()
+        sys.exit()
+    else:
+        evaluation(sys.argv[1])

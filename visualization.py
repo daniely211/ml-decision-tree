@@ -4,7 +4,6 @@ import numpy as np
 from evaluation import prune_tree, k_fold_split
 from numpy.random import shuffle
 
-
 class PlotTree:
 
     def __init__(self, tree, depth):
@@ -14,21 +13,21 @@ class PlotTree:
         self.x_loc = -1.0/self.width
         self.y_loc = 1.0
 
-    def plot_node(self, text, loc, xy_coord, node_type):
-        '''
-        define the type and color of annotations and node
-        '''
+    # Plot the node on a diagram
+    #
+    #   text        the text within the node
+    #   loc         location of node text (x,y)
+    #   xy          the location of the node
+    #   node_type   style of the box
+    def plot_node(self, text, loc, xy, node_type):
         args = dict(arrowstyle = "-", color = 'gold', connectionstyle = "arc3")
-        self.axes.annotate(text, xy = xy_coord, xycoords = 'axes fraction', xytext = loc, textcoords = 'axes fraction',
+        self.axes.annotate(text, xy = xy, xycoords = 'axes fraction', xytext = loc, textcoords = 'axes fraction',
                            va = 'bottom', ha = 'center', bbox = node_type, arrowprops = args)
 
-
+    # Get the width of the tree (number of leafs)
+    #
+    #   tree    the tree
     def get_width(self, tree):
-        '''
-        Get the number of leaf nodes
-        As a node, if it contains a dictionary set, this node is a leaf node
-        So we need to search its left child and right child until we find a leaf node
-        '''
         num_leaf_nodes = 0
 
         root_decision = list(tree.keys())[0]
@@ -42,12 +41,12 @@ class PlotTree:
 
         return num_leaf_nodes
 
-
-    def plot(self, tree, xy_coord, text = ''):
-        '''
-        Ploting the tree depends on the depth of the tree
-        and the number of leaf nodes
-        '''
+    # Plot the tree
+    #
+    #   tree    the tree to be plot
+    #   xy      the coordinates of the node
+    #   text    the text within the node
+    def plot(self, tree, xy, text = ''):
         num_leaf_nodes = self.get_width(tree)
 
         root_decision = list(tree.keys())[0]
@@ -57,7 +56,7 @@ class PlotTree:
         x_replacement = (1.0 + float(num_leaf_nodes)) / 2.0 / self.width
         centre_pt = (self.x_loc + x_replacement , self.y_loc)
         decision_node = dict(boxstyle = "round4", fc = "w", color = 'dodgerblue')
-        self.plot_node(root_decision, centre_pt, xy_coord, decision_node)
+        self.plot_node(root_decision, centre_pt, xy, decision_node)
 
         self.y_loc -= 1.0/self.depth
 
@@ -72,7 +71,6 @@ class PlotTree:
                 self.plot_node(node[key], (self.x_loc, self.y_loc), centre_pt, leaf_node)
 
         self.y_loc += 1.0/self.depth
-
 
 def retrieve_tree(tree):
     '''
@@ -89,7 +87,9 @@ def retrieve_tree(tree):
 
     return tree
 
-
+# Convert the tree into the format we use in PlotTree
+#
+#   tree    the tree to plot
 def merge_keys(tree):
     '''
     Merge the keys 'attribute' and 'value' into a new key 'condition'
@@ -106,7 +106,7 @@ def merge_keys(tree):
         new[condition] = tree
         return new
 
-
+# Plot the trees of all different formats
 def main():
     # upload clean and noisy dataset
     clean_dataset = np.loadtxt('wifi_db/clean_dataset.txt')

@@ -1,5 +1,15 @@
 # ML Decision Tree Coursework
 
-To run our code simply go into the file evaluation.py and uncomment the function call to either noisy or clean dataset.
+## Running our code
 
-If you would like load in your own data set, add another function call to our evaluation and pass in the path to the data set.
+To run the evaluation code in the terminal type:
+
+```
+python3 evaluation.py [data]
+```
+
+where `[data]` is the path to the data to be evaluated, e.g.:
+
+```
+python3 evaluation.py wifi_db/noisy_dataset.txt
+```
