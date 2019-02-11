@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import decision_tree
 import numpy as np
+import sys
 from evaluation import prune_tree, k_fold_split
 from numpy.random import shuffle
 
@@ -107,75 +108,36 @@ def merge_keys(tree):
         return new
 
 # Plot the trees of all different formats
-def main():
+def main(dataset_path):
     # upload clean and noisy dataset
-    clean_dataset = np.loadtxt('wifi_db/clean_dataset.txt')
-    noisy_dataset = np.loadtxt('wifi_db/noisy_dataset.txt')
-    shuffle(clean_dataset)
-    shuffle(noisy_dataset)
+    dataset = np.loadtxt(dataset_path)
+    shuffle(dataset)
 
-
-    # plot initial tree with clean dataset
-    (dt_clean, depth_1o) = decision_tree.decision_tree_learning(clean_dataset, 0)
-    dt_plot_clean = merge_keys(retrieve_tree(dt_clean))
-    pt_clean = PlotTree(dt_plot_clean, depth_1o)
-    pt_clean.plot(dt_plot_clean, (0.5, 1.0))
-    # plt.title("Initial tree with clean dataset")
-    plt.show()
-
-    # plot unpruned tree with clean dataset
+    # plot unpruned tree
     plt.figure()
-    (clean_split_test, clean_split_train) = k_fold_split(clean_dataset, 10, 3)
+    (clean_split_test, clean_split_train) = k_fold_split(dataset, 10, 3)
     (dt_unpruned_clean, depth_1u) = decision_tree.decision_tree_learning(clean_split_train, 0)
     dt_plot_clean_unpruned = merge_keys(retrieve_tree(dt_unpruned_clean))
     pt_pruned_clean = PlotTree(dt_plot_clean_unpruned, depth_1u)
     pt_pruned_clean.plot(dt_plot_clean_unpruned, (0.5, 1.0))
-    # plt.title("Unpruned tree with clean dataset")
     plt.show()
 
-
-    # plot pruned tree with clean dataset
+    # plot pruned tree
     plt.figure()
-    (clean_split_test, clean_split_train) = k_fold_split(clean_dataset, 10, 3)
+    (clean_split_test, clean_split_train) = k_fold_split(dataset, 10, 3)
     (dt_unpruned_clean, depth_11u) = decision_tree.decision_tree_learning(clean_split_train, 0)
     (dt_pruned_clean, depth_11p) = prune_tree(dt_unpruned_clean, clean_split_test)
     dt_plot_clean_pruned = merge_keys(retrieve_tree(dt_pruned_clean))
     pt_pruned_clean = PlotTree(dt_plot_clean_pruned, depth_11p)
     pt_pruned_clean.plot(dt_plot_clean_pruned, (0.5, 1.0))
-    # plt.title("Pruned tree with clean dataset")
     plt.show()
-
-
-    # plot initial tree with noisy dataset
-    plt.figure()
-    (dt_noisy, depth_2o) = decision_tree.decision_tree_learning(noisy_dataset, 0)
-    dt_plot_noisy = merge_keys(retrieve_tree(dt_noisy))
-    pt_noisy = PlotTree(dt_plot_noisy, depth_2o)
-    pt_noisy.plot(dt_plot_noisy, (0.5, 1.0))
-    # plt.title("Initial tree with noisy dataset")
-    plt.show()
-
-    # plot unpruned tree with noisy dataset
-    plt.figure()
-    (noisy_split_test, noisy_split_train) = k_fold_split(noisy_dataset, 10, 3)
-    (dt_unpruned_noisy, depth_2u) = decision_tree.decision_tree_learning(noisy_split_train, 0)
-    dt_plot_noisy_unpruned = merge_keys(retrieve_tree(dt_unpruned_noisy))
-    pt_pruned_noisy = PlotTree(dt_plot_noisy_unpruned, depth_2u)
-    pt_pruned_noisy.plot(dt_plot_noisy_unpruned, (0.5, 1.0))
-    # plt.title("Unpruned tree with noisy dataset")
-    plt.show()
-
-    # plot pruned tree with clean dataset
-    plt.figure()
-    (noisy_split_test, noisy_split_train) = k_fold_split(noisy_dataset, 10, 3)
-    (dt_unpruned_noisy, depth_22u) = decision_tree.decision_tree_learning(noisy_split_train, 0)
-    (dt_pruned_noisy, depth_22p) = prune_tree(dt_unpruned_noisy, noisy_split_test)
-    dt_plot_noisy_pruned = merge_keys(retrieve_tree(dt_pruned_noisy))
-    pt_pruned_noisy = PlotTree(dt_plot_noisy_pruned, depth_22p)
-    pt_pruned_noisy.plot(dt_plot_noisy_pruned, (0.5, 1.0))
-    # plt.title("Pruned tree with noisy dataset")
-    plt.show()
-
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) < 2:
+        print("Error: please pass the data set to be evaluated as an argument e.g.:")
+        print()
+        print("$  python3 visualisation.py wifi_db/noisy_dataset.txt")
+        print()
+        sys.exit()
+    else:
+        main(sys.argv[1])
